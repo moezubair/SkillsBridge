@@ -1,0 +1,90 @@
+# Backend — LLM Context
+
+This is a FastAPI backend for UniPath. Read this before making changes.
+
+## Architecture Rules (DO NOT BREAK THESE)
+
+1. **No global singletons.** All clients/services are created in `main.py:lifespan()` and stored on `app.state`. Never create module-level instances.
+
+2. **Dependency injection only.** Endpoints get dependencies via `Depends()` from `app/dependencies.py`. Endpoints never import singleton getters or instantiate services directly.
+
+3. **Settings as constructor params.** Pass `settings: Settings` into constructors. Never call `get_settings()` inside a class.
+
+4. **Tests use `app.dependency_overrides`.** Mock by overriding the dependency function, not by patching imports. Always call `app.dependency_overrides.clear()` after tests.
+
+## App Lifecycle
+
+```
+main.py:create_app()          → creates FastAPI instance, adds CORS, exception handler, router
+main.py:lifespan()            → connects Redis + Postgres, stores on app.state, yields, then disconnects
+app/dependencies.py           → functions that extract clients from request.app.state
+app/api/v1/*.py               → endpoints use Depends() to get clients/services
+```
+
+## How to Add a Feature
+
+Follow this exact order:
+
+1. **Repository** in `app/repositories/` — extends `BaseRepository(settings, postgres)`
+2. **Service** in `app/services/` — extends `BaseService(settings)`, takes repos as constructor args
+3. **Dependency function** in `app/dependencies.py` — reads from `request.app.state`
+4. **Initialize in `main.py:lifespan()`** — create repo → service → store on `app.state`
+5. **Endpoint** in `app/api/v1/` — new router file, use `Depends(get_your_service)`
+6. **Register router** in `app/api/v1/router.py` — `api_router.include_router(...)`
+7. **Request/response schemas** in `app/api/v1/schemas/req/` and `res/`
+
+## File Map
+
+```
+main.py                        → Entry point. Lifespan, app factory, exception handler.
+app/config/settings.py         → Pydantic Settings. All config via env vars. Cached with @lru_cache.
+app/core/postgres_client.py    → asyncpg pool wrapper. connect/disconnect/ping.
+app/core/redis_client.py       → redis.asyncio wrapper. connect/disconnect/ping.
+app/core/exceptions.py         → AppException(message, status_code) + NotFoundException, BadRequestException, UnauthorizedException.
+app/dependencies.py            → get_redis(request), get_postgres(request). Add new dep functions here.
+app/models/base.py             → TimestampMixin, StatusEnum. Base pydantic models.
+app/repositories/base_repository.py → BaseRepository(settings, postgres). Exposes self.pool.
+app/services/base_service.py   → BaseService(settings). Inherit for business logic.
+app/api/v1/router.py           → Aggregates all v1 routers under /api/v1 prefix.
+app/api/v1/health.py           → GET /api/v1/health. Pings Redis + Postgres, returns healthy/degraded.
+app/api/v1/schemas/req/        → Request schemas go here.
+app/api/v1/schemas/res/        → Response schemas go here.
+tests/conftest.py              → AsyncMock fixtures for redis/postgres. AsyncClient via httpx.
+tests/test_health.py           → Health endpoint tests (healthy + degraded).
+```
+
+## Key Conventions
+
+- **All routes** are under `/api/v1/` prefix.
+- **Postgres** uses `asyncpg` with connection pooling (min 2, max 10).
+- **Redis** uses `redis.asyncio` with `decode_responses=True` (strings, not bytes).
+- **Exceptions** are caught by a global handler that returns `{"detail": message}` with the appropriate status code.
+- **Health endpoint** always returns HTTP 200. Status field is "healthy" or "degraded".
+- **CORS** is configured via `CORS_ORIGINS` setting (list of allowed origins). Defaults to `["http://localhost:5173"]`.
+- **Docker**: `make dev` starts only postgres. `make up` starts everything. Compose files live in `deployment/`.
+- **Package manager**: pip + requirements.txt. No uv, no poetry.
+
+## Database
+
+- PostgreSQL 16 (alpine) via asyncpg.
+- No ORM. Raw SQL through the asyncpg pool.
+- Connection: individual params (host, port, db, user, password), not DSN.
+- `postgres_dsn` property exists on Settings but is currently unused.
+
+## Environment
+
+All config is in `.env` (see `.env.example`). Key vars:
+- `APP_NAME`, `APP_VERSION`, `ENVIRONMENT`, `DEBUG`, `LOG_LEVEL`
+- `HOST`, `PORT`
+- `CORS_ORIGINS` (JSON list)
+- `REDIS_HOST`, `REDIS_PORT`
+- `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
+
+## Common Pitfalls
+
+- Don't create a new Settings() inside a class — pass it in.
+- Don't import `app.state` at module level — it's only populated after lifespan runs.
+- Don't use `postgres_dsn` for asyncpg pool creation — the pool takes individual params.
+- Don't return non-200 from health check — the convention is 200 with status field.
+- Don't forget to register new routers in `app/api/v1/router.py`.
+- Don't forget to initialize new services in `lifespan()` and store on `app.state`.

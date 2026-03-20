@@ -1,0 +1,116 @@
+# Frontend — LLM Context
+
+This is a React + Vite frontend for UniPath. Read this before making changes.
+
+## Tech Stack
+
+- React 18.3 + TypeScript
+- Vite 6.3 (build + dev server)
+- Tailwind CSS v4 (utility-first, uses @tailwindcss/vite plugin)
+- React Router v7 (createBrowserRouter)
+- Radix UI + shadcn/ui (component primitives in src/app/components/ui/)
+- Lucide React (icons)
+- Motion (animations)
+- Sonner (toasts)
+
+## Project Structure
+
+```
+src/
+├── main.tsx                         → React root render + global CSS import
+├── styles/
+│   ├── index.css                    → Imports fonts, tailwind, theme
+│   ├── tailwind.css                 → Tailwind source import + tw-animate-css
+│   ├── theme.css                    → CSS custom properties (design tokens), light/dark themes
+│   └── fonts.css                    → Font imports
+└── app/
+    ├── App.tsx                      → RouterProvider wrapper, nothing else
+    ├── routes.ts                    → All route definitions (createBrowserRouter)
+    ├── data/
+    │   └── mock-data.ts             → Mock data for all screens
+    ├── screens/
+    │   ├── landing.tsx              → Hero + how-it-works + CTA
+    │   ├── profile-wizard.tsx       → 3-step form (grades → career → preferences)
+    │   ├── processing.tsx           → Animated loading, auto-navigates to /results
+    │   ├── results-dashboard.tsx    → Program cards grid, filters, tabs
+    │   ├── program-detail.tsx       → Single program view, requirements checklist
+    │   ├── study-plan.tsx           → Gap analysis, timeline, priority actions
+    │   └── not-found.tsx            → 404 page
+    └── components/
+        ├── ui/                      → shadcn/ui components (DO NOT MODIFY unless necessary)
+        ├── figma/                   → Figma integration components
+        ├── nav-bar.tsx              → Sticky nav with back button / logo
+        ├── filter-pill.tsx          → Toggleable filter chip
+        ├── program-card.tsx         → Program card for results grid
+        ├── progress-stepper.tsx     → Horizontal step indicator
+        ├── status-badge.tsx         → Colored status badges
+        ├── priority-action-card.tsx → Priority action with expand/collapse
+        └── match-checklist-row.tsx  → Requirement met/gap row
+```
+
+## User Flow
+
+```
+Landing (/) → Profile Wizard (/wizard) → Processing (/processing) → Results (/results)
+                                                                        ↓
+                                                              Program Detail (/program/:id)
+                                                                        ↓
+                                                              Study Plan (/study-plan)
+```
+
+## Routes
+
+| Path | Screen | Notes |
+|------|--------|-------|
+| `/` | Landing | Entry point |
+| `/wizard` | ProfileWizard | 3-step form |
+| `/processing` | Processing | Auto-redirects to /results after ~5s |
+| `/results` | ResultsDashboard | Tabs: "You qualify" / "Almost there" |
+| `/program/:id` | ProgramDetail | Uses useParams for id |
+| `/study-plan` | StudyPlan | Gap closure roadmap |
+| `*` | NotFound | 404 |
+
+## Key Conventions
+
+- **Path alias**: `@` maps to `src/`. Use `@/app/components/ui/button` not relative paths.
+- **Styling**: Tailwind utility classes only. No inline styles. No CSS modules.
+- **Responsive**: Mobile-first. Use `sm:`, `md:`, `lg:` breakpoints.
+- **Components**: Functional components + hooks. No class components.
+- **State**: Local useState only. No global state manager.
+- **Data**: Currently uses mock data from `app/data/mock-data.ts`.
+- **API proxy**: `/api` requests are proxied to `http://localhost:8000` in dev (vite.config.ts).
+- **Icons**: Use lucide-react. Import individually: `import { Home } from "lucide-react"`.
+- **Toasts**: Use sonner.
+- **Animations**: Use motion library (formerly framer-motion).
+- **shadcn/ui**: Components live in `components/ui/`. These are copied in, not a package. Avoid modifying them unless you have a good reason.
+
+## Theming
+
+Design tokens are CSS custom properties in `src/styles/theme.css`:
+- Light theme on `:root`, dark theme on `.dark` class
+- Uses oklch color space
+- Key tokens: `--primary`, `--secondary`, `--muted`, `--accent`, `--border`, `--input`, `--radius`
+- Tailwind theme maps these via `@theme inline` block
+
+Color conventions in screens:
+- Blue/purple: primary actions, CTAs, gradients
+- Green: success, eligible, met requirements
+- Amber: warning, "almost there", gaps
+- Gray: neutral, inactive, pending
+
+## Backend Connection
+
+- Dev proxy in `vite.config.ts`: `/api` → `http://localhost:8000`
+- In code, fetch with relative paths: `fetch('/api/v1/health')`
+- No API client library yet — just use fetch or add one when needed
+- Backend health check: `GET /api/v1/health`
+
+## Common Pitfalls
+
+- Don't modify files in `components/ui/` unless absolutely necessary — they're shadcn/ui primitives.
+- Don't use absolute URLs for API calls — use `/api/...` to hit the Vite proxy.
+- Don't add global state unless there's a clear need — local state is fine for now.
+- Don't forget to add new routes to `routes.ts` AND import the screen component.
+- Don't use `next-themes` features — it's installed as a dependency but the app doesn't use Next.js. Theme switching uses the `.dark` CSS class.
+- Data is all mocked. When connecting to the real API, replace imports from `mock-data.ts` with fetch calls.
+- Package manager is npm (not pnpm, despite pnpm overrides in package.json from Figma export).

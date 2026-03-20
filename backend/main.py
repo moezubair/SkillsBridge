@@ -1,0 +1,82 @@
+import logging
+from contextlib import asynccontextmanager
+
+import uvicorn
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from app.api.v1.router import api_router
+from app.config.settings import get_settings
+from app.core.exceptions import AppException
+from app.core.postgres_client import PostgresClient
+from app.core.redis_client import RedisClient
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    settings = get_settings()
+
+    logging.basicConfig(level=settings.LOG_LEVEL)
+    logger = logging.getLogger(__name__)
+
+    # Initialize Redis
+    redis_client = RedisClient(settings)
+    await redis_client.connect()
+    app.state.redis_client = redis_client
+    logger.info("Redis connected")
+
+    # Initialize PostgreSQL
+    postgres_client = PostgresClient(settings)
+    await postgres_client.connect()
+    app.state.postgres_client = postgres_client
+    logger.info("PostgreSQL connected")
+
+    yield
+
+    # Cleanup
+    await redis_client.disconnect()
+    logger.info("Redis disconnected")
+    await postgres_client.disconnect()
+    logger.info("PostgreSQL disconnected")
+
+
+def create_app() -> FastAPI:
+    settings = get_settings()
+
+    app = FastAPI(
+        title=settings.APP_NAME,
+        version=settings.APP_VERSION,
+        lifespan=lifespan,
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    @app.exception_handler(AppException)
+    async def app_exception_handler(request: Request, exc: AppException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.message},
+        )
+
+    app.include_router(api_router)
+
+    return app
+
+
+app = create_app()
+
+if __name__ == "__main__":
+    settings = get_settings()
+    uvicorn.run(
+        "main:app",
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=settings.DEBUG,
+    )
