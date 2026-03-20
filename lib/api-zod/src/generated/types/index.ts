@@ -6,4 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./analyzeProfileRequest";
+export * from "./analyzeProfileResponse";
+export * from "./eligibleProgram";
+export * from "./errorResponse";
+export * from "./gap";
+export * from "./gapType";
 export * from "./healthStatus";
+export * from "./nearMatchProgram";
+export * from "./userProfile";

@@ -14,3 +14,147 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Analyzes resume text or LinkedIn data along with profession choice to find matching university programs
+ * @summary Analyze user profile and match programs
+ */
+export const AnalyzeProfileBody = zod.object({
+  resumeText: zod.string().optional().describe("Raw text from uploaded resume"),
+  linkedinData: zod
+    .string()
+    .optional()
+    .describe("LinkedIn profile information as text"),
+  profession: zod
+    .string()
+    .describe(
+      'Target profession or field of study (e.g. \"Computer Science\", \"Business Administration\")',
+    ),
+  country: zod
+    .string()
+    .optional()
+    .describe("Preferred country for study (optional)"),
+});
+
+export const AnalyzeProfileResponse = zod.object({
+  userProfile: zod.object({
+    extractedGpa: zod
+      .string()
+      .optional()
+      .describe("GPA extracted from resume (if found)"),
+    extractedDegree: zod
+      .string()
+      .optional()
+      .describe("Highest degree extracted from resume"),
+    extractedField: zod
+      .string()
+      .optional()
+      .describe("Field of study from resume"),
+    extractedSkills: zod.array(zod.string()).describe("Key skills extracted"),
+    extractedExperience: zod
+      .string()
+      .optional()
+      .describe("Years of experience"),
+    extractedCourses: zod
+      .array(zod.string())
+      .describe("Relevant courses mentioned"),
+  }),
+  eligiblePrograms: zod
+    .array(
+      zod.object({
+        university: zod.string().describe("University name"),
+        country: zod.string().describe("Country where university is located"),
+        program: zod
+          .string()
+          .describe('Program name (e.g. \"MSc Computer Science\")'),
+        degree: zod
+          .string()
+          .describe(
+            'Degree type (e.g. \"Master\'s\", \"PhD\", \"Bachelor\'s\")',
+          ),
+        duration: zod
+          .string()
+          .optional()
+          .describe('Program duration (e.g. \"2 years\")'),
+        tuitionRange: zod
+          .string()
+          .optional()
+          .describe("Estimated tuition range"),
+        ranking: zod
+          .string()
+          .optional()
+          .describe("University or program ranking"),
+        admissionRequirements: zod
+          .array(zod.string())
+          .describe("Key admission requirements"),
+        whyEligible: zod
+          .string()
+          .describe("Explanation of why the user is eligible"),
+        applicationDeadline: zod
+          .string()
+          .optional()
+          .describe("Typical application deadline"),
+        programUrl: zod
+          .string()
+          .optional()
+          .describe("Link to program info (may be approximate)"),
+      }),
+    )
+    .describe("Programs the user currently qualifies for"),
+  nearMatchPrograms: zod
+    .array(
+      zod.object({
+        university: zod.string().describe("University name"),
+        country: zod.string().describe("Country where university is located"),
+        program: zod.string().describe("Program name"),
+        degree: zod.string().describe("Degree type"),
+        duration: zod.string().optional().describe("Program duration"),
+        tuitionRange: zod
+          .string()
+          .optional()
+          .describe("Estimated tuition range"),
+        ranking: zod
+          .string()
+          .optional()
+          .describe("University or program ranking"),
+        gaps: zod
+          .array(
+            zod.object({
+              type: zod
+                .enum([
+                  "gpa",
+                  "test_score",
+                  "course",
+                  "experience",
+                  "language",
+                  "other",
+                ])
+                .describe("Type of gap"),
+              description: zod
+                .string()
+                .describe("What is missing or insufficient"),
+              howToFix: zod
+                .string()
+                .describe("Actionable steps to close this gap"),
+              timeToFix: zod
+                .string()
+                .optional()
+                .describe(
+                  'Estimated time to close this gap (e.g. \"3-6 months\")',
+                ),
+            }),
+          )
+          .describe("List of gaps the user needs to close"),
+        matchScore: zod
+          .number()
+          .describe("How close the user is (0-100 percentage)"),
+        applicationDeadline: zod
+          .string()
+          .optional()
+          .describe("Typical application deadline"),
+        programUrl: zod.string().optional().describe("Link to program info"),
+      }),
+    )
+    .describe("Programs the user is close to qualifying for"),
+  summary: zod.string().describe("Brief summary of the analysis"),
+});

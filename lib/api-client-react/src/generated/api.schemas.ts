@@ -8,3 +8,119 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface AnalyzeProfileRequest {
+  /** Raw text from uploaded resume */
+  resumeText?: string;
+  /** LinkedIn profile information as text */
+  linkedinData?: string;
+  /** Target profession or field of study (e.g. "Computer Science", "Business Administration") */
+  profession: string;
+  /** Preferred country for study (optional) */
+  country?: string;
+}
+
+export interface UserProfile {
+  /** GPA extracted from resume (if found) */
+  extractedGpa?: string;
+  /** Highest degree extracted from resume */
+  extractedDegree?: string;
+  /** Field of study from resume */
+  extractedField?: string;
+  /** Key skills extracted */
+  extractedSkills: string[];
+  /** Years of experience */
+  extractedExperience?: string;
+  /** Relevant courses mentioned */
+  extractedCourses: string[];
+}
+
+export interface EligibleProgram {
+  /** University name */
+  university: string;
+  /** Country where university is located */
+  country: string;
+  /** Program name (e.g. "MSc Computer Science") */
+  program: string;
+  /** Degree type (e.g. "Master's", "PhD", "Bachelor's") */
+  degree: string;
+  /** Program duration (e.g. "2 years") */
+  duration?: string;
+  /** Estimated tuition range */
+  tuitionRange?: string;
+  /** University or program ranking */
+  ranking?: string;
+  /** Key admission requirements */
+  admissionRequirements: string[];
+  /** Explanation of why the user is eligible */
+  whyEligible: string;
+  /** Typical application deadline */
+  applicationDeadline?: string;
+  /** Link to program info (may be approximate) */
+  programUrl?: string;
+}
+
+/**
+ * Type of gap
+ */
+export type GapType = (typeof GapType)[keyof typeof GapType];
+
+export const GapType = {
+  gpa: "gpa",
+  test_score: "test_score",
+  course: "course",
+  experience: "experience",
+  language: "language",
+  other: "other",
+} as const;
+
+export interface Gap {
+  /** Type of gap */
+  type: GapType;
+  /** What is missing or insufficient */
+  description: string;
+  /** Actionable steps to close this gap */
+  howToFix: string;
+  /** Estimated time to close this gap (e.g. "3-6 months") */
+  timeToFix?: string;
+}
+
+export interface NearMatchProgram {
+  /** University name */
+  university: string;
+  /** Country where university is located */
+  country: string;
+  /** Program name */
+  program: string;
+  /** Degree type */
+  degree: string;
+  /** Program duration */
+  duration?: string;
+  /** Estimated tuition range */
+  tuitionRange?: string;
+  /** University or program ranking */
+  ranking?: string;
+  /** List of gaps the user needs to close */
+  gaps: Gap[];
+  /** How close the user is (0-100 percentage) */
+  matchScore: number;
+  /** Typical application deadline */
+  applicationDeadline?: string;
+  /** Link to program info */
+  programUrl?: string;
+}
+
+export interface AnalyzeProfileResponse {
+  userProfile: UserProfile;
+  /** Programs the user currently qualifies for */
+  eligiblePrograms: EligibleProgram[];
+  /** Programs the user is close to qualifying for */
+  nearMatchPrograms: NearMatchProgram[];
+  /** Brief summary of the analysis */
+  summary: string;
+}
+
+export interface ErrorResponse {
+  error: string;
+  message: string;
+}

@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: programs
+    description: University program matching operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /programs/analyze:
+    post:
+      operationId: analyzeProfile
+      tags: [programs]
+      summary: Analyze user profile and match programs
+      description: Analyzes resume text or LinkedIn data along with profession choice to find matching university programs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeProfileRequest"
+      responses:
+        "200":
+          description: Program analysis results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyzeProfileResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +69,197 @@ components:
       required:
         - status
 
+    AnalyzeProfileRequest:
+      type: object
+      properties:
+        resumeText:
+          type: string
+          description: Raw text from uploaded resume
+        linkedinData:
+          type: string
+          description: LinkedIn profile information as text
+        profession:
+          type: string
+          description: Target profession or field of study (e.g. "Computer Science", "Business Administration")
+        country:
+          type: string
+          description: Preferred country for study (optional)
+      required:
+        - profession
+
+    AnalyzeProfileResponse:
+      type: object
+      properties:
+        userProfile:
+          $ref: "#/components/schemas/UserProfile"
+        eligiblePrograms:
+          type: array
+          items:
+            $ref: "#/components/schemas/EligibleProgram"
+          description: Programs the user currently qualifies for
+        nearMatchPrograms:
+          type: array
+          items:
+            $ref: "#/components/schemas/NearMatchProgram"
+          description: Programs the user is close to qualifying for
+        summary:
+          type: string
+          description: Brief summary of the analysis
+      required:
+        - userProfile
+        - eligiblePrograms
+        - nearMatchPrograms
+        - summary
+
+    UserProfile:
+      type: object
+      properties:
+        extractedGpa:
+          type: string
+          description: GPA extracted from resume (if found)
+        extractedDegree:
+          type: string
+          description: Highest degree extracted from resume
+        extractedField:
+          type: string
+          description: Field of study from resume
+        extractedSkills:
+          type: array
+          items:
+            type: string
+          description: Key skills extracted
+        extractedExperience:
+          type: string
+          description: Years of experience
+        extractedCourses:
+          type: array
+          items:
+            type: string
+          description: Relevant courses mentioned
+      required:
+        - extractedSkills
+        - extractedCourses
+
+    EligibleProgram:
+      type: object
+      properties:
+        university:
+          type: string
+          description: University name
+        country:
+          type: string
+          description: Country where university is located
+        program:
+          type: string
+          description: Program name (e.g. "MSc Computer Science")
+        degree:
+          type: string
+          description: Degree type (e.g. "Master's", "PhD", "Bachelor's")
+        duration:
+          type: string
+          description: Program duration (e.g. "2 years")
+        tuitionRange:
+          type: string
+          description: Estimated tuition range
+        ranking:
+          type: string
+          description: University or program ranking
+        admissionRequirements:
+          type: array
+          items:
+            type: string
+          description: Key admission requirements
+        whyEligible:
+          type: string
+          description: Explanation of why the user is eligible
+        applicationDeadline:
+          type: string
+          description: Typical application deadline
+        programUrl:
+          type: string
+          description: Link to program info (may be approximate)
+      required:
+        - university
+        - country
+        - program
+        - degree
+        - admissionRequirements
+        - whyEligible
+
+    NearMatchProgram:
+      type: object
+      properties:
+        university:
+          type: string
+          description: University name
+        country:
+          type: string
+          description: Country where university is located
+        program:
+          type: string
+          description: Program name
+        degree:
+          type: string
+          description: Degree type
+        duration:
+          type: string
+          description: Program duration
+        tuitionRange:
+          type: string
+          description: Estimated tuition range
+        ranking:
+          type: string
+          description: University or program ranking
+        gaps:
+          type: array
+          items:
+            $ref: "#/components/schemas/Gap"
+          description: List of gaps the user needs to close
+        matchScore:
+          type: number
+          description: How close the user is (0-100 percentage)
+        applicationDeadline:
+          type: string
+          description: Typical application deadline
+        programUrl:
+          type: string
+          description: Link to program info
+      required:
+        - university
+        - country
+        - program
+        - degree
+        - gaps
+        - matchScore
+
+    Gap:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [gpa, test_score, course, experience, language, other]
+          description: Type of gap
+        description:
+          type: string
+          description: What is missing or insufficient
+        howToFix:
+          type: string
+          description: Actionable steps to close this gap
+        timeToFix:
+          type: string
+          description: Estimated time to close this gap (e.g. "3-6 months")
+      required:
+        - type
+        - description
+        - howToFix
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+        - message

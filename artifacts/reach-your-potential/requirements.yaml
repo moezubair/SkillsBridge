@@ -1,0 +1,17 @@
+packages:
+  "framer-motion": "For smooth page transitions, stagger animations on result cards, and polished loading states"
+  "zustand": "For clean global state management between the form and results view without prop drilling"
+  "clsx": "Utility for conditionally joining classNames"
+  "tailwind-merge": "Utility to safely merge Tailwind classes"
+
+images:
+  - path: "artifacts/reach-your-potential/public/images/hero-bg.png"
+    description: "Abstract soft gradient mesh background in deep royal blue and bright aspirational teal, featuring soft light leaks, very modern, clean, and professional"
+    aspect_ratio: "16:9"
+  - path: "artifacts/reach-your-potential/public/images/success-illustration.png"
+    description: "3D minimalist illustration of a graduation cap floating above a glowing pathway or stairs, representing reaching one's potential, corporate aesthetic, blue and teal colors"
+    aspect_ratio: "1:1"
+
+notes:
+  - Assuming /api/programs/analyze endpoint takes up to 30 seconds, so implementing a multi-stage loading animation.
+  - Using a generic FileReader for resume uploads; for robust PDF parsing in a real app, a backend parser or dedicated frontend library would be used, but standard text reading is implemented here alongside a manual paste option.

@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Reach your Potential"
+version = "1.0.0"
+id = "artifacts/reach-your-potential"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21125
+
+[services.development]
+run = "pnpm --filter @workspace/reach-your-potential run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/reach-your-potential", "run", "build" ]
+publicDir = "artifacts/reach-your-potential/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21125"
+BASE_PATH = "/"

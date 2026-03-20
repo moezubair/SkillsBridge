@@ -5,18 +5,26 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  AnalyzeProfileRequest,
+  AnalyzeProfileResponse,
+  ErrorResponse,
+  HealthStatus,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -99,3 +107,90 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * Analyzes resume text or LinkedIn data along with profession choice to find matching university programs
+ * @summary Analyze user profile and match programs
+ */
+export const getAnalyzeProfileUrl = () => {
+  return `/api/programs/analyze`;
+};
+
+export const analyzeProfile = async (
+  analyzeProfileRequest: AnalyzeProfileRequest,
+  options?: RequestInit,
+): Promise<AnalyzeProfileResponse> => {
+  return customFetch<AnalyzeProfileResponse>(getAnalyzeProfileUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(analyzeProfileRequest),
+  });
+};
+
+export const getAnalyzeProfileMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof analyzeProfile>>,
+    TError,
+    { data: BodyType<AnalyzeProfileRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof analyzeProfile>>,
+  TError,
+  { data: BodyType<AnalyzeProfileRequest> },
+  TContext
+> => {
+  const mutationKey = ["analyzeProfile"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof analyzeProfile>>,
+    { data: BodyType<AnalyzeProfileRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return analyzeProfile(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AnalyzeProfileMutationResult = NonNullable<
+  Awaited<ReturnType<typeof analyzeProfile>>
+>;
+export type AnalyzeProfileMutationBody = BodyType<AnalyzeProfileRequest>;
+export type AnalyzeProfileMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Analyze user profile and match programs
+ */
+export const useAnalyzeProfile = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof analyzeProfile>>,
+    TError,
+    { data: BodyType<AnalyzeProfileRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof analyzeProfile>>,
+  TError,
+  { data: BodyType<AnalyzeProfileRequest> },
+  TContext
+> => {
+  return useMutation(getAnalyzeProfileMutationOptions(options));
+};
