@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
 
+    # PDF uploads: metadata in Postgres, bytes under UPLOAD_ROOT (relative to process cwd, usually backend/)
+    UPLOAD_ROOT: str = "storage/uploads"
+    MAX_PDF_UPLOAD_BYTES: int = 20 * 1024 * 1024
+
     @property
     def postgres_dsn(self) -> str:
         return (

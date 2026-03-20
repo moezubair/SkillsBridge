@@ -11,6 +11,7 @@ from app.config.settings import get_settings
 from app.core.exceptions import AppException
 from app.core.postgres_client import PostgresClient
 from app.core.redis_client import RedisClient
+from app.core.upload.schema import ensure_uploaded_files_table
 
 
 @asynccontextmanager
@@ -31,6 +32,9 @@ async def lifespan(app: FastAPI):
     await postgres_client.connect()
     app.state.postgres_client = postgres_client
     logger.info("PostgreSQL connected")
+
+    await ensure_uploaded_files_table(postgres_client.pool)
+    logger.info("Upload schema ready")
 
     yield
 
