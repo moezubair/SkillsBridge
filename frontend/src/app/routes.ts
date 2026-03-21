@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router";
 import { Landing } from "./screens/landing";
 import { UserTypeSelection } from "./screens/user-type-selection";
-import { ProfileWizard } from "./screens/profile-wizard";
+import { SchoolWizard } from "./screens/school-wizard";
 import { JobSeekerWizard } from "./screens/job-seeker-wizard";
 import { Processing } from "./screens/processing";
 import { ResultsDashboard } from "./screens/results-dashboard";
@@ -26,8 +26,8 @@ export const router = createBrowserRouter([
     Component: UserTypeSelection,
   },
   {
-    path: "/wizard",
-    Component: ProfileWizard,
+    path: "/school-wizard",
+    Component: SchoolWizard,
   },
   {
     path: "/job-seeker",

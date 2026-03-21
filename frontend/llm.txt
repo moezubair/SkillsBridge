@@ -114,3 +114,1866 @@ Color conventions in screens:
 - Don't use `next-themes` features — it's installed as a dependency but the app doesn't use Next.js. Theme switching uses the `.dark` CSS class.
 - Data is all mocked. When connecting to the real API, replace imports from `mock-data.ts` with fetch calls.
 - Package manager is npm (not pnpm, despite pnpm overrides in package.json from Figma export).
+
+
+API:
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FastAPI Service",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/job/files/upload": {
+      "post": {
+        "tags": [
+          "job-files"
+        ],
+        "summary": "Upload Job Pdf",
+        "description": "Store a career/CV PDF under ``jobs/`` and record metadata in ``job_uploaded_files``.",
+        "operationId": "upload_job_pdf_api_v1_job_files_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_job_pdf_api_v1_job_files_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredFile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/job/files/{job_file_id}/extract-cv": {
+      "post": {
+        "tags": [
+          "job-files"
+        ],
+        "summary": "Extract Cv From Job Pdf",
+        "operationId": "extract_cv_from_job_pdf_api_v1_job_files__job_file_id__extract_cv_post",
+        "parameters": [
+          {
+            "name": "job_file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job File Id"
+            }
+          },
+          {
+            "name": "schema_version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Built-in schema version (e.g. cv_v1)",
+              "default": "cv_v1",
+              "title": "Schema Version"
+            },
+            "description": "Built-in schema version (e.g. cv_v1)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CvExtractionRecord"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/job/files/{job_file_id}/cv-extraction": {
+      "get": {
+        "tags": [
+          "job-files"
+        ],
+        "summary": "Get Latest Cv Extraction",
+        "operationId": "get_latest_cv_extraction_api_v1_job_files__job_file_id__cv_extraction_get",
+        "parameters": [
+          {
+            "name": "job_file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job File Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CvExtractionDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/job/files/{job_file_id}/cv-extraction.json": {
+      "get": {
+        "tags": [
+          "job-files"
+        ],
+        "summary": "Download Cv Extraction Json",
+        "operationId": "download_cv_extraction_json_api_v1_job_files__job_file_id__cv_extraction_json_get",
+        "parameters": [
+          {
+            "name": "job_file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job File Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/job/files/{job_file_id}/download": {
+      "get": {
+        "tags": [
+          "job-files"
+        ],
+        "summary": "Download Job Pdf",
+        "operationId": "download_job_pdf_api_v1_job_files__job_file_id__download_get",
+        "parameters": [
+          {
+            "name": "job_file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job File Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/job/files/{job_file_id}": {
+      "get": {
+        "tags": [
+          "job-files"
+        ],
+        "summary": "Get Job File Metadata",
+        "operationId": "get_job_file_metadata_api_v1_job_files__job_file_id__get",
+        "parameters": [
+          {
+            "name": "job_file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job File Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredFile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/school/files/upload": {
+      "post": {
+        "tags": [
+          "school-files"
+        ],
+        "summary": "Upload School Pdf",
+        "description": "Store a transcript PDF under ``school/`` and record metadata in ``school_uploaded_files``.",
+        "operationId": "upload_school_pdf_api_v1_school_files_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_school_pdf_api_v1_school_files_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredFile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/school/files/{school_file_id}/extract-transcript": {
+      "post": {
+        "tags": [
+          "school-files"
+        ],
+        "summary": "Extract Transcript From School Pdf",
+        "operationId": "extract_transcript_from_school_pdf_api_v1_school_files__school_file_id__extract_transcript_post",
+        "parameters": [
+          {
+            "name": "school_file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "School File Id"
+            }
+          },
+          {
+            "name": "schema_version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Built-in schema version (e.g. transcript_v1)",
+              "default": "transcript_v1",
+              "title": "Schema Version"
+            },
+            "description": "Built-in schema version (e.g. transcript_v1)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptExtractionRecord"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/school/files/{school_file_id}/transcript-extraction": {
+      "get": {
+        "tags": [
+          "school-files"
+        ],
+        "summary": "Get Latest Transcript Extraction",
+        "operationId": "get_latest_transcript_extraction_api_v1_school_files__school_file_id__transcript_extraction_get",
+        "parameters": [
+          {
+            "name": "school_file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "School File Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptExtractionDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/school/files/{school_file_id}/transcript-extraction.json": {
+      "get": {
+        "tags": [
+          "school-files"
+        ],
+        "summary": "Download Transcript Extraction Json",
+        "operationId": "download_transcript_extraction_json_api_v1_school_files__school_file_id__transcript_extraction_json_get",
+        "parameters": [
+          {
+            "name": "school_file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "School File Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/school/files/{school_file_id}/download": {
+      "get": {
+        "tags": [
+          "school-files"
+        ],
+        "summary": "Download School Pdf",
+        "operationId": "download_school_pdf_api_v1_school_files__school_file_id__download_get",
+        "parameters": [
+          {
+            "name": "school_file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "School File Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/school/files/{school_file_id}": {
+      "get": {
+        "tags": [
+          "school-files"
+        ],
+        "summary": "Get School File Metadata",
+        "operationId": "get_school_file_metadata_api_v1_school_files__school_file_id__get",
+        "parameters": [
+          {
+            "name": "school_file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "School File Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredFile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/job-preferences": {
+      "put": {
+        "tags": [
+          "job-preferences"
+        ],
+        "summary": "Put Job Preferences",
+        "operationId": "put_job_preferences_api_v1_job_preferences_put",
+        "parameters": [
+          {
+            "name": "job_file_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Job upload id from POST /api/v1/job/files/upload",
+              "title": "Job File Id"
+            },
+            "description": "Job upload id from POST /api/v1/job/files/upload"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobPreferencesBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPreferencesRecord"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "job-preferences"
+        ],
+        "summary": "Get Job Preferences",
+        "operationId": "get_job_preferences_api_v1_job_preferences_get",
+        "parameters": [
+          {
+            "name": "job_file_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Job upload id",
+              "title": "Job File Id"
+            },
+            "description": "Job upload id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPreferencesRecord"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/search": {
+      "post": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Post Job Search",
+        "description": "Run TinyFish once, persist one job listing, return it with run metadata.",
+        "operationId": "post_job_search_api_v1_jobs_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobSearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/latest": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Get Latest Job",
+        "operationId": "get_latest_job_api_v1_jobs_latest_get",
+        "parameters": [
+          {
+            "name": "job_file_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Job upload id from POST /api/v1/job/files/upload",
+              "title": "Job File Id"
+            },
+            "description": "Job upload id from POST /api/v1/job/files/upload"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LatestJobResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student-extras/ielts": {
+      "put": {
+        "tags": [
+          "student-extras"
+        ],
+        "summary": "Put Student Extras",
+        "operationId": "put_student_extras_api_v1_student_extras_ielts_put",
+        "parameters": [
+          {
+            "name": "school_file_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "School upload id from POST /api/v1/school/files/upload",
+              "title": "School File Id"
+            },
+            "description": "School upload id from POST /api/v1/school/files/upload"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentExtrasBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentExtrasRecord"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "student-extras"
+        ],
+        "summary": "Get Student Extras",
+        "operationId": "get_student_extras_api_v1_student_extras_ielts_get",
+        "parameters": [
+          {
+            "name": "school_file_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "School upload id",
+              "title": "School File Id"
+            },
+            "description": "School upload id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentExtrasRecord"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/school-matches/harvard": {
+      "post": {
+        "tags": [
+          "school-matches"
+        ],
+        "summary": "Post Harvard Major Match",
+        "description": "Rank Harvard majors: one TinyFish run on HARVARD_CATALOG_URL with a goal built from the\nlatest transcript extraction; optional ielts_id loads IELTS/skills from student_extras and\ncan imply school_file_id when omitted. Falls back to a local heuristic if TinyFish fails.",
+        "operationId": "post_harvard_major_match_api_v1_school_matches_harvard_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HarvardMatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HarvardMatchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_upload_job_pdf_api_v1_job_files_upload_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "CV PDF document"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_job_pdf_api_v1_job_files_upload_post"
+      },
+      "Body_upload_school_pdf_api_v1_school_files_upload_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "Transcript PDF document"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_school_pdf_api_v1_school_files_upload_post"
+      },
+      "CvExtractionDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "file_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "File Id"
+          },
+          "schema_version": {
+            "type": "string",
+            "title": "Schema Version"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "complete | partial | failed"
+          },
+          "extraction": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extraction"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "extraction_metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extraction Metadata"
+          },
+          "parse_metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parse Metadata"
+          },
+          "extract_metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extract Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "file_id",
+          "schema_version",
+          "status",
+          "extraction",
+          "created_at"
+        ],
+        "title": "CvExtractionDetail",
+        "description": "Includes optional metadata for debugging or UI grounding."
+      },
+      "CvExtractionRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "file_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "File Id"
+          },
+          "schema_version": {
+            "type": "string",
+            "title": "Schema Version"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "complete | partial | failed"
+          },
+          "extraction": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extraction"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "file_id",
+          "schema_version",
+          "status",
+          "extraction",
+          "created_at"
+        ],
+        "title": "CvExtractionRecord",
+        "description": "One persisted extraction run for an uploaded file."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HarvardMajorMatchOut": {
+        "properties": {
+          "major": {
+            "type": "string",
+            "title": "Major"
+          },
+          "score": {
+            "type": "integer",
+            "title": "Score"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "detail_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "major",
+          "score",
+          "reasons"
+        ],
+        "title": "HarvardMajorMatchOut"
+      },
+      "HarvardMatchRequest": {
+        "properties": {
+          "school_file_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "School File Id",
+            "description": "Transcript upload id. Optional if ielts_id is set (resolved from that row)."
+          },
+          "ielts_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ielts Id",
+            "description": "Optional id of a student-extras row (PUT/GET /api/v1/student-extras). Loads IELTS + skills; implies school_file_id when omitted."
+          }
+        },
+        "type": "object",
+        "title": "HarvardMatchRequest"
+      },
+      "HarvardMatchResponse": {
+        "properties": {
+          "school": {
+            "type": "string",
+            "title": "School",
+            "default": "Harvard"
+          },
+          "catalog_source": {
+            "type": "string",
+            "title": "Catalog Source",
+            "description": "tinyfish_ranked | heuristic_fallback | heuristic_no_tinyfish | heuristic_no_catalog_url"
+          },
+          "matches": {
+            "items": {
+              "$ref": "#/components/schemas/HarvardMajorMatchOut"
+            },
+            "type": "array",
+            "title": "Matches"
+          }
+        },
+        "type": "object",
+        "required": [
+          "catalog_source",
+          "matches"
+        ],
+        "title": "HarvardMatchResponse"
+      },
+      "IeltsScores": {
+        "properties": {
+          "overall": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overall"
+          },
+          "listening": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listening"
+          },
+          "reading": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reading"
+          },
+          "writing": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Writing"
+          },
+          "speaking": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speaking"
+          }
+        },
+        "type": "object",
+        "title": "IeltsScores"
+      },
+      "JobListingOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "search_run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Search Run Id"
+          },
+          "source_site": {
+            "type": "string",
+            "title": "Source Site"
+          },
+          "source_url": {
+            "type": "string",
+            "title": "Source Url"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "company": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "employment_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employment Type"
+          },
+          "remote_policy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Policy"
+          },
+          "posted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Posted At"
+          },
+          "description_snippet": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Snippet"
+          },
+          "salary_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Text"
+          },
+          "match_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Score"
+          },
+          "match_reasons": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Reasons"
+          },
+          "fetched_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fetched At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "search_run_id",
+          "source_site",
+          "source_url",
+          "title",
+          "fetched_at"
+        ],
+        "title": "JobListingOut"
+      },
+      "JobPreferencesBody": {
+        "properties": {
+          "desired_titles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Desired Titles"
+          },
+          "locations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Locations"
+          },
+          "remote_only": {
+            "type": "boolean",
+            "title": "Remote Only",
+            "default": false
+          },
+          "visa_sponsorship": {
+            "type": "boolean",
+            "title": "Visa Sponsorship",
+            "default": false
+          },
+          "industries": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Industries"
+          },
+          "seniority": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seniority"
+          },
+          "keywords_include": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keywords Include"
+          },
+          "keywords_exclude": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keywords Exclude"
+          }
+        },
+        "type": "object",
+        "title": "JobPreferencesBody",
+        "description": "Wizard-style preferences persisted per CV file."
+      },
+      "JobPreferencesRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "job_file_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Job File Id"
+          },
+          "preferences": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Preferences"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "job_file_id",
+          "preferences",
+          "updated_at"
+        ],
+        "title": "JobPreferencesRecord"
+      },
+      "JobSearchRequest": {
+        "properties": {
+          "job_file_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Job File Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_file_id"
+        ],
+        "title": "JobSearchRequest",
+        "description": "Run TinyFish once for this CV file (uses saved preferences + latest extraction)."
+      },
+      "JobSearchResponse": {
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/JobListingOut"
+          },
+          "run": {
+            "$ref": "#/components/schemas/JobSearchRunOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job",
+          "run"
+        ],
+        "title": "JobSearchResponse"
+      },
+      "JobSearchRunOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "job_file_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Job File Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "tinyfish_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tinyfish Run Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "job_file_id",
+          "status",
+          "started_at"
+        ],
+        "title": "JobSearchRunOut"
+      },
+      "LatestJobResponse": {
+        "properties": {
+          "job": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobListingOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobSearchRunOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "job",
+          "run"
+        ],
+        "title": "LatestJobResponse"
+      },
+      "StoredFile": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "original_filename": {
+            "type": "string",
+            "maxLength": 512,
+            "title": "Original Filename"
+          },
+          "storage_key": {
+            "type": "string",
+            "title": "Storage Key",
+            "description": "Relative path / filename under the upload root"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Size Bytes"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "original_filename",
+          "storage_key",
+          "mime_type",
+          "size_bytes",
+          "created_at"
+        ],
+        "title": "StoredFile",
+        "description": "Record returned from the DB after a successful PDF upload."
+      },
+      "StudentExtrasBody": {
+        "properties": {
+          "ielts": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IeltsScores"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "skills": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Skills"
+          }
+        },
+        "type": "object",
+        "title": "StudentExtrasBody"
+      },
+      "StudentExtrasRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "school_file_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "School File Id"
+          },
+          "ielts": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ielts"
+          },
+          "skills": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Skills"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "school_file_id",
+          "updated_at"
+        ],
+        "title": "StudentExtrasRecord"
+      },
+      "TranscriptExtractionDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "file_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "File Id"
+          },
+          "schema_version": {
+            "type": "string",
+            "title": "Schema Version"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "complete | partial | failed"
+          },
+          "extraction": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extraction"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "extraction_metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extraction Metadata"
+          },
+          "parse_metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parse Metadata"
+          },
+          "extract_metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extract Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "file_id",
+          "schema_version",
+          "status",
+          "extraction",
+          "created_at"
+        ],
+        "title": "TranscriptExtractionDetail"
+      },
+      "TranscriptExtractionRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "file_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "File Id"
+          },
+          "schema_version": {
+            "type": "string",
+            "title": "Schema Version"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "complete | partial | failed"
+          },
+          "extraction": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extraction"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "file_id",
+          "schema_version",
+          "status",
+          "extraction",
+          "created_at"
+        ],
+        "title": "TranscriptExtractionRecord"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

@@ -9,7 +9,7 @@ const userTypes = [
     title: "Student",
     subtitle: "Find university programs that match your academic profile",
     icon: GraduationCap,
-    to: "/wizard",
+    to: "/school-wizard",
   },
   {
     type: "job-seeker",

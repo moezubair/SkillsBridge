@@ -1,8 +1,32 @@
+import { useEffect, useState } from "react";
 import { ArrowRight, Linkedin, Trophy, Briefcase, Award, Star, GraduationCap } from "lucide-react";
 import { Link } from "react-router";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { NavBar } from "../components/nav-bar";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+
+const heroSlides = [
+  {
+    tagline: "2,400+ programs, across 50+ countries",
+    headline: "Find every program you can get into",
+    description:
+      "Upload your marks, pick a career direction. We show you every matching program worldwide — and what to improve to unlock more.",
+    cta: "Get started for free",
+    image:
+      "https://images.unsplash.com/photo-1632834380561-d1e05839a33a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1bml2ZXJzaXR5JTIwY2FtcHVzJTIwc3R1ZGVudHN8ZW58MXx8fHwxNzczOTM0OTc1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+    imageAlt: "University campus with students",
+  },
+  {
+    tagline: "10,000+ jobs, from top companies worldwide",
+    headline: "Land any job you want",
+    description:
+      "Upload your resume, tell us your dream role. We match you to jobs you're qualified for — and show you exactly how to get the ones you're not.",
+    cta: "Get started for free",
+    image:
+      "https://images.unsplash.com/photo-1521737711867-e3b97375f902?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dGVhbSUyMG9mZmljZSUyMHdvcmt8ZW58MHx8fHwxNzE2NTAwMDAwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+    imageAlt: "Professionals collaborating in modern office",
+  },
+];
 
 const steps = [
   {
@@ -35,6 +59,17 @@ const dataSources = [
 ];
 
 export function Landing() {
+  const [slideIndex, setSlideIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSlideIndex((prev) => (prev + 1) % heroSlides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const slide = heroSlides[slideIndex];
+
   return (
     <div className="min-h-screen bg-white">
       <NavBar />
@@ -43,32 +78,66 @@ export function Landing() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-16 sm:pb-24">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
-            <p className="text-primary font-semibold tracking-wide text-sm uppercase mb-4">
-              2400+ programs, across 50+ countries
-            </p>
-            <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-gray-900 leading-[1.1] mb-6 tracking-tight">
-              Find every program you can get into
-            </h1>
-            <p className="text-lg text-gray-500 mb-10 leading-relaxed max-w-lg">
-              Upload your marks, pick a career direction. We show you every
-              matching program worldwide — and what to improve to unlock more.
-            </p>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={slideIndex}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+              >
+                <p className="text-primary font-semibold tracking-wide text-sm uppercase mb-4">
+                  {slide.tagline}
+                </p>
+                <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-gray-900 leading-[1.1] mb-6 tracking-tight">
+                  {slide.headline}
+                </h1>
+                <p className="text-lg text-gray-500 mb-10 leading-relaxed max-w-lg">
+                  {slide.description}
+                </p>
+              </motion.div>
+            </AnimatePresence>
             <Link
               to="/choose"
               className="group inline-flex items-center gap-3 bg-[#9B1B30] text-white pl-8 pr-6 py-4 rounded-full font-semibold hover:bg-[#7A1420] transition-all text-base"
             >
-              Get started for free
+              {slide.cta}
               <span className="flex items-center justify-center w-8 h-8 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
                 <ArrowRight className="w-4 h-4" />
               </span>
             </Link>
+
+            {/* Slide indicators */}
+            <div className="flex gap-2 mt-8">
+              {heroSlides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSlideIndex(i)}
+                  className={`h-1.5 rounded-full transition-all duration-500 cursor-pointer ${
+                    i === slideIndex
+                      ? "w-8 bg-[#9B1B30]"
+                      : "w-4 bg-gray-300 hover:bg-gray-400"
+                  }`}
+                />
+              ))}
+            </div>
           </div>
           <div className="hidden lg:block">
-            <ImageWithFallback
-              src="https://images.unsplash.com/photo-1632834380561-d1e05839a33a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1bml2ZXJzaXR5JTIwY2FtcHVzJTIwc3R1ZGVudHN8ZW58MXx8fHwxNzczOTM0OTc1fDA&ixlib=rb-4.1.0&q=80&w=1080"
-              alt="University campus with students"
-              className="rounded-2xl shadow-2xl w-full"
-            />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={slideIndex}
+                initial={{ opacity: 0, scale: 0.97 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.03 }}
+                transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+              >
+                <ImageWithFallback
+                  src={slide.image}
+                  alt={slide.imageAlt}
+                  className="rounded-2xl shadow-2xl w-full"
+                />
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
       </section>

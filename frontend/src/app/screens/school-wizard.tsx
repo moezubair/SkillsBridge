@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 import {
   Upload,
   Search,
@@ -10,6 +11,10 @@ import {
   PenLine,
   BookOpen,
   BarChart3,
+  Download,
+  Loader2,
+  Sparkles,
+  CheckCircle2,
 } from "lucide-react";
 import { NavBar } from "../components/nav-bar";
 import { ProgressStepper } from "../components/progress-stepper";
@@ -17,12 +22,34 @@ import { DocumentUploadCard } from "../components/document-upload-card";
 
 type Step = 1 | 2 | 3;
 
-export function ProfileWizard() {
+type SchoolStoredFileRecord = {
+  id: string;
+  original_filename: string;
+  storage_key: string;
+  mime_type: string;
+  size_bytes: number;
+  created_at: string;
+};
+
+type TranscriptExtractionRecord = {
+  id: string;
+  file_id: string;
+  schema_version: string;
+  status: string;
+  extraction: Record<string, unknown>;
+  created_at: string;
+};
+
+export function SchoolWizard() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<Step>(1);
 
   // Step 1: Grades & Documents
   const [transcriptFile, setTranscriptFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [extracting, setExtracting] = useState(false);
+  const [storedFile, setStoredFile] = useState<SchoolStoredFileRecord | null>(null);
+  const [transcript, setTranscript] = useState<TranscriptExtractionRecord | null>(null);
   const [ieltsFile, setIeltsFile] = useState<File | null>(null);
   const [toeflFile, setToeflFile] = useState<File | null>(null);
   const [satFile, setSatFile] = useState<File | null>(null);
@@ -101,6 +128,70 @@ export function ProfileWizard() {
     }
   };
 
+  // Upload transcript and auto-extract when file is selected
+  useEffect(() => {
+    if (!transcriptFile) return;
+    let cancelled = false;
+
+    async function uploadAndExtract() {
+      setUploading(true);
+      setTranscript(null);
+      setStoredFile(null);
+      try {
+        // POST /api/v1/school/files/upload
+        const body = new FormData();
+        body.append("file", transcriptFile!);
+        const uploadRes = await fetch("/api/v1/school/files/upload", {
+          method: "POST",
+          body,
+        });
+        const uploadPayload = await uploadRes.json().catch(() => null);
+        if (!uploadRes.ok) {
+          throw new Error(
+            typeof uploadPayload?.detail === "string"
+              ? uploadPayload.detail
+              : "Upload failed"
+          );
+        }
+        const stored = uploadPayload as SchoolStoredFileRecord;
+        if (cancelled) return;
+        setStoredFile(stored);
+        setUploading(false);
+        toast.success("Transcript uploaded.");
+
+        // POST /api/v1/school/files/{id}/extract-transcript
+        setExtracting(true);
+        const extractRes = await fetch(
+          `/api/v1/school/files/${stored.id}/extract-transcript`,
+          { method: "POST" }
+        );
+        const extractPayload = await extractRes.json().catch(() => null);
+        if (!extractRes.ok) {
+          throw new Error(
+            typeof extractPayload?.detail === "string"
+              ? extractPayload.detail
+              : "Extraction failed"
+          );
+        }
+        if (cancelled) return;
+        setTranscript(extractPayload as TranscriptExtractionRecord);
+        toast.success("Transcript extracted.");
+      } catch (err) {
+        if (!cancelled) {
+          toast.error(err instanceof Error ? err.message : "Upload failed");
+        }
+      } finally {
+        if (!cancelled) {
+          setUploading(false);
+          setExtracting(false);
+        }
+      }
+    }
+
+    uploadAndExtract();
+    return () => { cancelled = true; };
+  }, [transcriptFile]);
+
   const majorSuggestions = [
     "Computer Science",
     "Business Administration",
@@ -147,8 +238,84 @@ export function ProfileWizard() {
                 icon={Upload}
                 file={transcriptFile}
                 onFileSelect={setTranscriptFile}
-                onRemove={() => setTranscriptFile(null)}
+                onRemove={() => {
+                  setTranscriptFile(null);
+                  setStoredFile(null);
+                  setTranscript(null);
+                }}
               />
+
+              {/* Upload / extraction progress */}
+              {(uploading || extracting) && (
+                <div className="flex items-center gap-2 mt-3 text-sm text-gray-600">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {uploading ? "Uploading transcript…" : "Extracting grades…"}
+                </div>
+              )}
+
+              {/* Extraction results */}
+              {transcript && transcript.extraction && (
+                <div className="mt-4 rounded-lg border border-green-200 bg-green-50/50 p-4 space-y-2 text-sm">
+                  <div className="flex items-center gap-2 font-semibold text-gray-900">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    Transcript extracted
+                    <span className="ml-auto text-xs font-normal text-gray-500 capitalize">
+                      {transcript.status}
+                    </span>
+                  </div>
+                  {typeof transcript.extraction.school_name === "string" && (
+                    <p>
+                      <span className="text-gray-500">School: </span>
+                      {transcript.extraction.school_name}
+                    </p>
+                  )}
+                  {transcript.extraction.gpa != null && (
+                    <p>
+                      <span className="text-gray-500">GPA: </span>
+                      {String(transcript.extraction.gpa)}
+                      {typeof transcript.extraction.gpa_scale === "string" &&
+                        transcript.extraction.gpa_scale
+                        ? ` (${transcript.extraction.gpa_scale})`
+                        : ""}
+                    </p>
+                  )}
+                  {Array.isArray(transcript.extraction.courses) && (
+                    <p>
+                      <span className="text-gray-500">Courses parsed: </span>
+                      {transcript.extraction.courses.length}
+                    </p>
+                  )}
+
+                  {/* Download buttons */}
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {storedFile && (
+                      <a
+                        href={`/api/v1/school/files/${storedFile.id}/download`}
+                        download={storedFile.original_filename}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        Download PDF
+                      </a>
+                    )}
+                    <a
+                      href={`/api/v1/school/files/${transcript.file_id}/transcript-extraction.json`}
+                      download={`${transcript.file_id}-transcript-extraction.json`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      Download JSON
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {/* File metadata */}
+              {storedFile && !uploading && !extracting && !transcript && (
+                <p className="mt-2 text-xs text-gray-500">
+                  Uploaded: {storedFile.original_filename} ({(storedFile.size_bytes / 1024).toFixed(1)} KB)
+                </p>
+              )}
             </div>
 
             {/* Test Scores */}

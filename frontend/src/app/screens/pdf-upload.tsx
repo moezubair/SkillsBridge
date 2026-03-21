@@ -263,8 +263,8 @@ export function PdfUploadScreen() {
             )}
 
             <p className="mt-6 text-center text-sm text-gray-500 space-x-3">
-              <Link to="/wizard" className="text-blue-600 hover:underline">
-                Continue to profile wizard
+              <Link to="/school-wizard" className="text-blue-600 hover:underline">
+                Continue to school wizard
               </Link>
               {lastFile && (
                 <Link

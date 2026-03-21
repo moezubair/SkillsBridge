@@ -41,31 +41,6 @@ export function NavBar({ showBack, title }: NavBarProps) {
           </div>
 
           <div className="flex items-center gap-4">
-            <Link
-              to="/upload"
-              className="hidden sm:block text-sm font-medium text-white/80 hover:text-white transition-colors"
-            >
-              CV Upload
-            </Link>
-            <Link
-              to="/upload/school"
-              className="hidden sm:block text-sm font-medium text-white/80 hover:text-white transition-colors"
-            >
-              Transcript
-            </Link>
-            <Link
-              to="/jobs"
-              className="hidden sm:block text-sm font-medium text-white/80 hover:text-white transition-colors"
-            >
-              Jobs
-            </Link>
-            <Link
-              to="/harvard"
-              className="hidden sm:block text-sm font-medium text-white/80 hover:text-white transition-colors"
-            >
-              Harvard
-            </Link>
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white">
