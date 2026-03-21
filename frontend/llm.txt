@@ -868,13 +868,13 @@ API:
         }
       }
     },
-    "/api/v1/student-extras/ielts": {
+    "/api/v1/student-extras": {
       "put": {
         "tags": [
           "student-extras"
         ],
         "summary": "Put Student Extras",
-        "operationId": "put_student_extras_api_v1_student_extras_ielts_put",
+        "operationId": "put_student_extras_api_v1_student_extras_put",
         "parameters": [
           {
             "name": "school_file_id",
@@ -927,7 +927,7 @@ API:
           "student-extras"
         ],
         "summary": "Get Student Extras",
-        "operationId": "get_student_extras_api_v1_student_extras_ielts_get",
+        "operationId": "get_student_extras_api_v1_student_extras_get",
         "parameters": [
           {
             "name": "school_file_id",
@@ -966,19 +966,19 @@ API:
         }
       }
     },
-    "/api/v1/school-matches/harvard": {
+    "/api/v1/school-matches/": {
       "post": {
         "tags": [
           "school-matches"
         ],
-        "summary": "Post Harvard Major Match",
-        "description": "Rank Harvard majors: one TinyFish run on HARVARD_CATALOG_URL with a goal built from the\nlatest transcript extraction; optional ielts_id loads IELTS/skills from student_extras and\ncan imply school_file_id when omitted. Falls back to a local heuristic if TinyFish fails.",
-        "operationId": "post_harvard_major_match_api_v1_school_matches_harvard_post",
+        "summary": "Post University Program Match",
+        "description": "Gather program requirements for all universities in universities.json.",
+        "operationId": "post_university_program_match_api_v1_school_matches__post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/HarvardMatchRequest"
+                "$ref": "#/components/schemas/UniversityMatchRequest"
               }
             }
           },
@@ -990,7 +990,49 @@ API:
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HarvardMatchResponse"
+                  "$ref": "#/components/schemas/UniversityMatchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/school-matches/assess": {
+      "post": {
+        "tags": [
+          "school-matches"
+        ],
+        "summary": "Post University Program Assessment",
+        "description": "Assess program fit using OpenAI based on stored requirements.",
+        "operationId": "post_university_program_assessment_api_v1_school_matches_assess_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UniversityMatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UniversityAssessmentResponse"
                 }
               }
             }
@@ -1011,6 +1053,44 @@ API:
   },
   "components": {
     "schemas": {
+      "Action": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "why": {
+            "type": "string",
+            "title": "Why"
+          },
+          "priority": {
+            "type": "integer",
+            "title": "Priority"
+          },
+          "timeline": {
+            "type": "string",
+            "title": "Timeline"
+          },
+          "estimated_impact": {
+            "type": "string",
+            "title": "Estimated Impact"
+          },
+          "difficulty": {
+            "type": "string",
+            "title": "Difficulty"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action",
+          "why",
+          "priority",
+          "timeline",
+          "estimated_impact",
+          "difficulty"
+        ],
+        "title": "Action"
+      },
       "Body_upload_job_pdf_api_v1_job_files_upload_post": {
         "properties": {
           "file": {
@@ -1165,6 +1245,34 @@ API:
         "title": "CvExtractionRecord",
         "description": "One persisted extraction run for an uploaded file."
       },
+      "Gap": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "requirement": {
+            "type": "string",
+            "title": "Requirement"
+          },
+          "current": {
+            "type": "string",
+            "title": "Current"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "requirement",
+          "current",
+          "severity"
+        ],
+        "title": "Gap"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1177,102 +1285,6 @@ API:
         },
         "type": "object",
         "title": "HTTPValidationError"
-      },
-      "HarvardMajorMatchOut": {
-        "properties": {
-          "major": {
-            "type": "string",
-            "title": "Major"
-          },
-          "score": {
-            "type": "integer",
-            "title": "Score"
-          },
-          "reasons": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Reasons"
-          },
-          "detail_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Detail Url"
-          }
-        },
-        "type": "object",
-        "required": [
-          "major",
-          "score",
-          "reasons"
-        ],
-        "title": "HarvardMajorMatchOut"
-      },
-      "HarvardMatchRequest": {
-        "properties": {
-          "school_file_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "School File Id",
-            "description": "Transcript upload id. Optional if ielts_id is set (resolved from that row)."
-          },
-          "ielts_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Ielts Id",
-            "description": "Optional id of a student-extras row (PUT/GET /api/v1/student-extras). Loads IELTS + skills; implies school_file_id when omitted."
-          }
-        },
-        "type": "object",
-        "title": "HarvardMatchRequest"
-      },
-      "HarvardMatchResponse": {
-        "properties": {
-          "school": {
-            "type": "string",
-            "title": "School",
-            "default": "Harvard"
-          },
-          "catalog_source": {
-            "type": "string",
-            "title": "Catalog Source",
-            "description": "tinyfish_ranked | heuristic_fallback | heuristic_no_tinyfish | heuristic_no_catalog_url"
-          },
-          "matches": {
-            "items": {
-              "$ref": "#/components/schemas/HarvardMajorMatchOut"
-            },
-            "type": "array",
-            "title": "Matches"
-          }
-        },
-        "type": "object",
-        "required": [
-          "catalog_source",
-          "matches"
-        ],
-        "title": "HarvardMatchResponse"
       },
       "IeltsScores": {
         "properties": {
@@ -1700,6 +1712,48 @@ API:
         ],
         "title": "LatestJobResponse"
       },
+      "ProgramAssessmentOut": {
+        "properties": {
+          "program_id": {
+            "type": "string",
+            "title": "Program Id"
+          },
+          "overall_assessment": {
+            "type": "string",
+            "title": "Overall Assessment"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/Gap"
+            },
+            "type": "array",
+            "title": "Gaps"
+          },
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/Action"
+            },
+            "type": "array",
+            "title": "Actions"
+          },
+          "alternate_paths": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Alternate Paths"
+          }
+        },
+        "type": "object",
+        "required": [
+          "program_id",
+          "overall_assessment",
+          "gaps",
+          "actions",
+          "alternate_paths"
+        ],
+        "title": "ProgramAssessmentOut"
+      },
       "StoredFile": {
         "properties": {
           "id": {
@@ -1933,6 +1987,170 @@ API:
           "created_at"
         ],
         "title": "TranscriptExtractionRecord"
+      },
+      "UniversityAssessmentResponse": {
+        "properties": {
+          "assessments": {
+            "items": {
+              "$ref": "#/components/schemas/ProgramAssessmentOut"
+            },
+            "type": "array",
+            "title": "Assessments"
+          }
+        },
+        "type": "object",
+        "required": [
+          "assessments"
+        ],
+        "title": "UniversityAssessmentResponse"
+      },
+      "UniversityMatchRequest": {
+        "properties": {
+          "school_file_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "School File Id",
+            "description": "Transcript upload id. Optional if ielts_id is set (resolved from that row)."
+          },
+          "ielts_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ielts Id",
+            "description": "Optional id of a student-extras row (PUT/GET /api/v1/student-extras). Loads IELTS + skills; implies school_file_id when omitted."
+          },
+          "refresh": {
+            "type": "boolean",
+            "title": "Refresh",
+            "description": "If true, regenerate assessments even if they exist in DB.",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "UniversityMatchRequest"
+      },
+      "UniversityMatchResponse": {
+        "properties": {
+          "matches": {
+            "items": {
+              "$ref": "#/components/schemas/UniversityProgramMatch"
+            },
+            "type": "array",
+            "title": "Matches"
+          }
+        },
+        "type": "object",
+        "required": [
+          "matches"
+        ],
+        "title": "UniversityMatchResponse"
+      },
+      "UniversityProgramMatch": {
+        "properties": {
+          "university": {
+            "type": "string",
+            "title": "University"
+          },
+          "catalog_source": {
+            "type": "string",
+            "title": "Catalog Source",
+            "description": "tinyfish_gathered | heuristic_fallback | tinyfish_failed"
+          },
+          "programs": {
+            "items": {
+              "$ref": "#/components/schemas/UniversityProgramOut"
+            },
+            "type": "array",
+            "title": "Programs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "university",
+          "catalog_source",
+          "programs"
+        ],
+        "title": "UniversityProgramMatch"
+      },
+      "UniversityProgramOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "required_courses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Required Courses"
+          },
+          "required_gpa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required Gpa"
+          },
+          "required_tests": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Required Tests"
+          },
+          "extracurriculars": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Extracurriculars"
+          },
+          "other_requirements": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Other Requirements"
+          },
+          "detail_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "required_courses",
+          "required_tests",
+          "extracurriculars",
+          "other_requirements"
+        ],
+        "title": "UniversityProgramOut"
       },
       "ValidationError": {
         "properties": {

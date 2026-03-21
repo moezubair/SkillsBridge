@@ -50,7 +50,18 @@ export function SchoolWizard() {
   const [extracting, setExtracting] = useState(false);
   const [storedFile, setStoredFile] = useState<SchoolStoredFileRecord | null>(null);
   const [transcript, setTranscript] = useState<TranscriptExtractionRecord | null>(null);
-  const [ieltsFile, setIeltsFile] = useState<File | null>(null);
+  const [ieltsScores, setIeltsScores] = useState<{
+    listening: string; reading: string; writing: string; speaking: string;
+  }>({ listening: "", reading: "", writing: "", speaking: "" });
+
+  const ieltsSubScores = [ieltsScores.listening, ieltsScores.reading, ieltsScores.writing, ieltsScores.speaking];
+  const filledSubs = ieltsSubScores.filter((v) => v.trim() !== "").map(Number).filter((n) => !isNaN(n));
+  const ieltsOverall = filledSubs.length === 4
+    ? (Math.round((filledSubs.reduce((a, b) => a + b, 0) / 4) * 2) / 2).toFixed(1)
+    : null;
+  const [skills, setSkills] = useState<string[]>([]);
+  const [newSkill, setNewSkill] = useState("");
+  const [savingExtras, setSavingExtras] = useState(false);
   const [toeflFile, setToeflFile] = useState<File | null>(null);
   const [satFile, setSatFile] = useState<File | null>(null);
   const [greFile, setGreFile] = useState<File | null>(null);
@@ -95,6 +106,17 @@ export function SchoolWizard() {
     setSubjects(subjects.filter((_, i) => i !== index));
   };
 
+  const addSkill = () => {
+    if (newSkill.trim() && !skills.includes(newSkill.trim())) {
+      setSkills([...skills, newSkill.trim()]);
+      setNewSkill("");
+    }
+  };
+
+  const removeSkill = (skill: string) => {
+    setSkills(skills.filter((s) => s !== skill));
+  };
+
   const addMajor = () => {
     if (newMajor.trim() && !majors.includes(newMajor.trim())) {
       setMajors([...majors, newMajor.trim()]);
@@ -114,11 +136,49 @@ export function SchoolWizard() {
     );
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    // Save student extras when leaving Step 1
+    if (currentStep === 1) {
+      if (!storedFile) {
+        toast.error("Please upload your transcript first.");
+        return;
+      }
+      setSavingExtras(true);
+      try {
+        const ieltsBody: Record<string, number | null> = {
+          overall: ieltsOverall ? parseFloat(ieltsOverall) : null,
+        };
+        for (const key of ["listening", "reading", "writing", "speaking"] as const) {
+          const val = ieltsScores[key].trim();
+          ieltsBody[key] = val ? parseFloat(val) : null;
+        }
+        const res = await fetch(
+          `/api/v1/student-extras?school_file_id=${storedFile.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ielts: ieltsBody, skills }),
+          }
+        );
+        if (!res.ok) {
+          const payload = await res.json().catch(() => null);
+          throw new Error(
+            typeof payload?.detail === "string" ? payload.detail : "Failed to save extras"
+          );
+        }
+        toast.success("Profile saved.");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to save extras");
+        setSavingExtras(false);
+        return;
+      }
+      setSavingExtras(false);
+    }
+
     if (currentStep < 3) {
       setCurrentStep((currentStep + 1) as Step);
     } else {
-      navigate("/processing", { state: { userType: "student" } });
+      navigate("/processing", { state: { userType: "student", schoolFileId: storedFile?.id } });
     }
   };
 
@@ -318,24 +378,103 @@ export function SchoolWizard() {
               )}
             </div>
 
-            {/* Test Scores */}
+            {/* IELTS Scores */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h3 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                <Languages className="w-5 h-5 text-primary" />
+                IELTS Scores
+                <span className="text-sm font-normal text-gray-500">Optional</span>
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Enter your IELTS band scores if you have them
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {(["listening", "reading", "writing", "speaking"] as const).map(
+                  (field) => (
+                    <div key={field}>
+                      <label className="block text-xs font-medium text-gray-600 mb-1 capitalize">
+                        {field}
+                      </label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        min="0"
+                        max="9"
+                        value={ieltsScores[field]}
+                        onChange={(e) =>
+                          setIeltsScores({ ...ieltsScores, [field]: e.target.value })
+                        }
+                        placeholder="0-9"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                      />
+                    </div>
+                  )
+                )}
+              </div>
+              {/* Auto-calculated overall */}
+              <div className="mt-3 flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-600">Overall Band Score:</span>
+                {ieltsOverall ? (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-primary/10 text-primary">
+                    {ieltsOverall}
+                  </span>
+                ) : (
+                  <span className="text-xs text-gray-400">Fill all 4 scores to auto-calculate</span>
+                )}
+              </div>
+            </div>
+
+            {/* Skills */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h3 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                Skills
+                <span className="text-sm font-normal text-gray-500">Optional</span>
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Add relevant skills to improve your program matching
+              </p>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm"
+                  >
+                    {skill}
+                    <X
+                      className="w-3.5 h-3.5 cursor-pointer hover:text-primary/70"
+                      onClick={() => removeSkill(skill)}
+                    />
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newSkill}
+                  onChange={(e) => setNewSkill(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addSkill()}
+                  placeholder="Type a skill and press Enter"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+                <button
+                  onClick={addSkill}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Other Test Scores */}
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                Test Scores
+                Other Test Scores
               </h2>
               <p className="text-sm text-gray-600 mb-4">
-                Upload certificates or score reports for any tests you've taken
+                Upload certificates or score reports for any other tests you've taken
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <DocumentUploadCard
-                  title="IELTS"
-                  description="Score report or certificate"
-                  icon={Languages}
-                  file={ieltsFile}
-                  onFileSelect={setIeltsFile}
-                  onRemove={() => setIeltsFile(null)}
-                  compact
-                />
                 <DocumentUploadCard
                   title="TOEFL"
                   description="Score report or certificate"
@@ -678,8 +817,10 @@ export function SchoolWizard() {
           </button>
           <button
             onClick={handleNext}
-            className="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors cursor-pointer"
+            disabled={savingExtras}
+            className="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2"
           >
+            {savingExtras && <Loader2 className="w-4 h-4 animate-spin" />}
             {currentStep === 3 ? "Find my programs" : "Next"}
           </button>
         </div>
