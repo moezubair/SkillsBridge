@@ -127,6 +127,10 @@ The API will be available at `http://localhost:8000`.
 | `POST` | `/api/v1/files/upload` | Multipart field `file` (PDF only); saves bytes under `UPLOAD_ROOT`, metadata in `uploaded_files` |
 | `GET` | `/api/v1/files/{uuid}` | JSON metadata for a stored file |
 | `GET` | `/api/v1/files/{uuid}/download` | Streams the PDF with original filename |
+| `POST` | `/api/v1/files/{uuid}/extract-cv` | LandingAI ADE: parse PDF → markdown → extract by `cv_v1` schema; persists `cv_extractions` |
+| `GET` | `/api/v1/files/{uuid}/cv-extraction` | Latest extraction row (includes `extraction` JSON and metadata) |
+
+Query param on extract: `schema_version` (default `cv_v1`). Requires `LANDINGAI_API_KEY`.
 
 ### Health Check
 
@@ -168,6 +172,10 @@ See `.env.example` for all options.
 | `POSTGRES_DB`       | app_db           | Database name              |
 | `POSTGRES_USER`     | postgres         | Database user              |
 | `POSTGRES_PASSWORD` | postgres         | Database password          |
+| `LANDINGAI_API_KEY` | (empty)          | Required for `/extract-cv` |
+| `LANDINGAI_BASE_URL` | `https://api.va.landing.ai` | ADE API host        |
+| `LANDINGAI_PARSE_MODEL` | `dpt-2-latest` | PDF → markdown model   |
+| `LANDINGAI_EXTRACT_MODEL` | `extract-latest` | Schema extract model |
 
 ## Testing
 

@@ -1,15 +1,19 @@
-"""Multipart PDF upload and download endpoints."""
+"""Multipart PDF upload, download, and CV extraction endpoints."""
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 from fastapi.responses import FileResponse
 
 from app.config.settings import get_settings
+from app.core.cv_extraction import SCHEMA_VERSION_CV_V1
 from app.core.exceptions import BadRequestException, NotFoundException
 from app.core.upload import FileUploadService, IncomingPdfPayload
-from app.dependencies import get_file_upload_service
+from app.dependencies import get_cv_extraction_service, get_file_upload_service
+from app.models.cv_extraction import CvExtractionDetail, CvExtractionRecord
 from app.models.file import StoredFile
+from app.repositories.cv_extraction_repository import to_summary
+from app.services.cv_extraction_service import CvExtractionService
 
 router = APIRouter()
 
@@ -48,6 +52,32 @@ async def upload_pdf(
         data=data,
     )
     return await svc.save_pdf(payload)
+
+
+@router.post("/{file_id}/extract-cv", response_model=CvExtractionRecord)
+async def extract_cv_from_uploaded_pdf(
+    file_id: UUID,
+    schema_version: str = Query(
+        default=SCHEMA_VERSION_CV_V1,
+        description="Built-in schema version (e.g. cv_v1)",
+    ),
+    svc: CvExtractionService = Depends(get_cv_extraction_service),
+):
+    """Parse PDF with LandingAI ADE, extract fields by JSON schema, persist to cv_extractions."""
+    detail = await svc.extract_cv(file_id, schema_version=schema_version)
+    return to_summary(detail)
+
+
+@router.get("/{file_id}/cv-extraction", response_model=CvExtractionDetail)
+async def get_latest_cv_extraction(
+    file_id: UUID,
+    svc: CvExtractionService = Depends(get_cv_extraction_service),
+):
+    """Return the most recent CV extraction for this uploaded file."""
+    record = await svc.get_latest(file_id)
+    if not record:
+        raise NotFoundException(message="No CV extraction found for this file")
+    return record
 
 
 @router.get("/{file_id}", response_model=StoredFile)

@@ -1,8 +1,10 @@
 """Orchestrates validation → disk → database for PDF uploads."""
 
+import asyncio
 from pathlib import Path
 from uuid import UUID, uuid4
 
+from app.core.exceptions import NotFoundException
 from app.core.upload.disk_storage import LocalDiskFileStorage
 from app.core.upload.payloads import IncomingPdfPayload
 from app.core.upload.pdf_validator import PdfUploadValidator
@@ -48,3 +50,18 @@ class FileUploadService:
     def resolve_disk_path(self, record: StoredFile) -> Path:
         """Path on disk for streaming a download (delegates to storage root + key)."""
         return self._storage.full_path(record.storage_key)
+
+    async def read_stored_pdf(self, file_id: UUID) -> tuple[bytes, StoredFile]:
+        """Load bytes for a previously uploaded PDF (e.g. CV parsing pipeline)."""
+        record = await self.get_metadata(file_id)
+        if not record:
+            raise NotFoundException(message="File not found")
+        path = self.resolve_disk_path(record)
+        if not path.is_file():
+            raise NotFoundException(message="File content missing on disk")
+
+        def _read() -> bytes:
+            return path.read_bytes()
+
+        data = await asyncio.to_thread(_read)
+        return data, record

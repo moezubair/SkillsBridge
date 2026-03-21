@@ -1,8 +1,9 @@
 import { useId, useRef, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
-import { Download, FileText, Upload } from "lucide-react";
+import { Download, FileText, Sparkles, Upload } from "lucide-react";
 import { NavBar } from "../components/nav-bar";
+import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import {
   Card,
@@ -23,12 +24,53 @@ export type StoredFileRecord = {
   created_at: string;
 };
 
+/** Mirrors backend `CvExtractionRecord` after POST extract-cv. */
+export type CvExtractionRecord = {
+  id: string;
+  file_id: string;
+  schema_version: string;
+  status: string;
+  extraction: Record<string, unknown>;
+  created_at: string;
+};
+
+function asStringArray(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+}
+
 export function PdfUploadScreen() {
   const inputId = useId();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [extracting, setExtracting] = useState(false);
   const [lastFile, setLastFile] = useState<StoredFileRecord | null>(null);
+  const [cvExtraction, setCvExtraction] = useState<CvExtractionRecord | null>(null);
   const [pickedName, setPickedName] = useState<string | null>(null);
+
+  async function extractCv(fileId: string) {
+    setExtracting(true);
+    setCvExtraction(null);
+    try {
+      const res = await fetch(
+        `/api/v1/files/${fileId}/extract-cv`,
+        { method: "POST" },
+      );
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) {
+        const msg =
+          typeof payload?.detail === "string"
+            ? payload.detail
+            : "CV extraction failed";
+        throw new Error(msg);
+      }
+      setCvExtraction(payload as CvExtractionRecord);
+      toast.success("CV parsed with LandingAI.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "CV extraction failed");
+    } finally {
+      setExtracting(false);
+    }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,6 +81,7 @@ export function PdfUploadScreen() {
       return;
     }
     setBusy(true);
+    setCvExtraction(null);
     try {
       const body = new FormData();
       body.append("file", file);
@@ -54,10 +97,12 @@ export function PdfUploadScreen() {
             : "Upload failed";
         throw new Error(msg);
       }
-      setLastFile(payload as StoredFileRecord);
+      const stored = payload as StoredFileRecord;
+      setLastFile(stored);
       toast.success("PDF uploaded and saved.");
       if (input) input.value = "";
       setPickedName(null);
+      await extractCv(stored.id);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -65,10 +110,24 @@ export function PdfUploadScreen() {
     }
   }
 
+  const ex = cvExtraction?.extraction;
+  const technical = ex ? asStringArray(ex.technical_skills) : [];
+  const soft = ex ? asStringArray(ex.soft_skills) : [];
+  const langs = ex ? asStringArray(ex.languages) : [];
+  const summary =
+    ex && typeof ex.professional_summary === "string"
+      ? ex.professional_summary
+      : null;
+  const fullName = ex && typeof ex.full_name === "string" ? ex.full_name : null;
+  const years =
+    ex && typeof ex.years_of_experience === "number"
+      ? ex.years_of_experience
+      : null;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <NavBar showBack title="Upload PDF" />
-      <main className="max-w-lg mx-auto px-4 py-10">
+      <main className="max-w-2xl mx-auto px-4 py-10">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
@@ -76,8 +135,9 @@ export function PdfUploadScreen() {
               Upload transcript (PDF)
             </CardTitle>
             <CardDescription>
-              Only <strong>.pdf</strong> files are accepted. Files are stored on disk
-              and registered in the database so you can download them later.
+              Only <strong>.pdf</strong> files are accepted. After upload we run{" "}
+              <strong>LandingAI</strong> parse + schema extract and store structured CV
+              fields (skills, experience, etc.).
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -103,8 +163,12 @@ export function PdfUploadScreen() {
                   </p>
                 )}
               </div>
-              <Button type="submit" className="w-full" disabled={busy}>
-                {busy ? "Uploading…" : "Upload PDF"}
+              <Button type="submit" className="w-full" disabled={busy || extracting}>
+                {busy
+                  ? "Uploading…"
+                  : extracting
+                    ? "Extracting CV…"
+                    : "Upload & extract CV"}
               </Button>
             </form>
 
@@ -138,6 +202,63 @@ export function PdfUploadScreen() {
                     Download from server
                   </a>
                 </Button>
+              </div>
+            )}
+
+            {cvExtraction && ex && (
+              <div className="mt-8 rounded-lg border border-blue-100 bg-blue-50/50 p-4 space-y-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <Sparkles className="h-4 w-4 text-blue-600" />
+                  Extracted profile
+                  <Badge variant="secondary" className="ml-auto capitalize">
+                    {cvExtraction.status}
+                  </Badge>
+                </div>
+                {fullName && (
+                  <p className="text-base font-medium text-gray-900">{fullName}</p>
+                )}
+                {years != null && (
+                  <p className="text-sm text-gray-600">
+                    ~{years} years experience (as stated on CV)
+                  </p>
+                )}
+                {summary && (
+                  <p className="text-sm text-gray-700 leading-relaxed">{summary}</p>
+                )}
+                {technical.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                      Technical skills
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {technical.slice(0, 24).map((s) => (
+                        <Badge key={s} variant="outline" className="font-normal">
+                          {s}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {soft.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                      Soft skills
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {soft.slice(0, 16).map((s) => (
+                        <Badge key={s} variant="secondary" className="font-normal">
+                          {s}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {langs.length > 0 && (
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">Languages: </span>
+                    {langs.join(", ")}
+                  </p>
+                )}
               </div>
             )}
 
