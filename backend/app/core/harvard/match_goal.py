@@ -1,4 +1,4 @@
-"""TinyFish goal text for Harvard major ranking (mirrors job board goal pattern)."""
+"""TinyFish goal text for gathering program requirements (web scraping focus)."""
 
 from __future__ import annotations
 
@@ -45,30 +45,31 @@ def _ielts_line(ielts: dict[str, Any] | None) -> str:
     return ("IELTS bands: " + ", ".join(bits) + ".") if bits else ""
 
 
-def build_harvard_match_goal(
+def build_program_requirements_goal(
     *,
     extraction: dict[str, Any],
     ielts: dict[str, Any] | None,
     skills: list[str],
-    major_names_for_context: list[str],
-    max_major_names: int = 45,
+    program_names_for_context: list[str],
+    university_name: str,
+    max_program_names: int = 45,
 ) -> str:
     """
-    Natural-language goal for TinyFish on Harvard academics URL.
-    Instructs agent to return strict JSON ranked matches.
+    Natural-language goal for TinyFish web scraping.
+    Instructs agent to gather program requirements and details, not rank.
     """
     t = _transcript_summary(extraction)
     iel = _ielts_line(ielts)
     sk = [s for s in skills if isinstance(s, str) and s.strip()][:24]
     sk_part = ("Skills / activities: " + ", ".join(sk) + ".") if sk else ""
 
-    names = [str(n).strip() for n in major_names_for_context if n][:max_major_names]
+    names = [str(n).strip() for n in program_names_for_context if n][:max_program_names]
     names_json = json.dumps(names, ensure_ascii=False)
 
     parts = [
-        "You are helping rank Harvard College undergraduate fields of study (concentrations) for this student.",
-        "Use the page you are on plus the student profile below.",
-        "Student transcript summary:",
+        f"You are helping gather detailed program requirements from {university_name} for this student.",
+        "Use the page you are on to extract information about each program.",
+        "Student profile for reference:",
         t,
     ]
     if iel:
@@ -77,16 +78,21 @@ def build_harvard_match_goal(
         parts.append(sk_part)
     parts.extend(
         [
-            "Candidate concentration names to consider (prefer ranking within this set when they fit; "
-            "you may include another Harvard field if strongly justified):",
+            f"Program names at {university_name} to research (prefer gathering details for programs in this list):",
             names_json + ".",
+            "For each program, extract and return ALL of the following information if available:",
+            "- Required courses or course categories (e.g., Mathematics, Physics, Chemistry)",
+            "- Minimum GPA (if stated)",
+            "- Standardized test requirements (SAT, ACT, IELTS, TOEFL, etc.)",
+            "- Additional tests or assessments (AP, IB, subject-specific exams)",
+            "- Extracurricular activities or experiences preferred/required",
+            "- Any other admission or enrollment criteria listed on the page",
             "Return ONLY valid JSON with this exact shape — no markdown, no prose outside JSON:",
-            '{"matches": ['
-            '{"major": string, "score": number (0-100 integer), '
-            '"reasons": string[] (2-5 short strings), "detail_url": string (optional, absolute URL if known)}'
+            '{"programs": ['
+            '{"name": string, "required_courses": string[], "required_gpa": string (optional), "required_tests": string[], "extracurriculars": string[], "other_requirements": string[], "detail_url": string (optional, absolute URL)}'
             "]}.",
-            "Include up to 15 matches, sorted by score descending.",
-            "Scores should reflect fit to coursework, STEM/humanities balance, and stated skills/English profile.",
+            "Include all programs found, up to 20.",
+            "Use only information explicitly stated on the page; do not infer or add opinions.",
         ]
     )
     return " ".join(parts)
