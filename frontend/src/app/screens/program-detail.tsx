@@ -17,7 +17,7 @@ export function ProgramDetail() {
           <h2 className="text-2xl font-semibold text-gray-900 mb-4">
             Program not found
           </h2>
-          <Link to="/results" className="text-blue-600 hover:text-blue-700">
+          <Link to="/results" className="text-primary hover:text-primary/80">
             Back to results
           </Link>
         </div>
@@ -82,8 +82,8 @@ export function ProgramDetail() {
               <div
                 className={`w-16 h-16 rounded-full flex items-center justify-center font-bold text-lg ${
                   program.status === "eligible"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-amber-100 text-amber-700"
+                    ? "bg-green-50 text-green-600"
+                    : "bg-amber-50 text-amber-600"
                 }`}
               >
                 {program.matchPercentage}%
@@ -94,7 +94,7 @@ export function ProgramDetail() {
           <div className="flex flex-wrap gap-3">
             <a
               href="#"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
             >
               Visit program
               <ExternalLink className="w-4 h-4" />
@@ -139,14 +139,14 @@ export function ProgramDetail() {
           </div>
 
           {program.status === "almost" && program.gap && (
-            <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="font-medium text-amber-900 mb-2">
+            <div className="mt-6 p-4 bg-amber-50/70 border border-amber-100 rounded-lg">
+              <p className="font-medium text-amber-700 mb-2">
                 Close this gap to qualify:
               </p>
-              <p className="text-amber-800">{program.gap}</p>
+              <p className="text-amber-600">{program.gap}</p>
               <Link
                 to="/study-plan"
-                className="inline-block mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium"
+                className="inline-block mt-3 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors text-sm font-medium"
               >
                 Add to study plan
               </Link>
@@ -191,7 +191,7 @@ export function ProgramDetail() {
                     month: "long",
                     day: "numeric",
                   })}
-                  <span className="ml-2 text-sm text-amber-600">
+                  <span className="ml-2 text-sm text-amber-500">
                     ({daysUntilDeadline} days left)
                   </span>
                 </p>

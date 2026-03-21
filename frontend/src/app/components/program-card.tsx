@@ -61,8 +61,8 @@ export function ProgramCard({
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold text-sm ${
                 status === "eligible"
-                  ? "bg-green-100 text-green-700"
-                  : "bg-amber-100 text-amber-700"
+                  ? "bg-green-50 text-green-600"
+                  : "bg-amber-50 text-amber-600"
               }`}
             >
               {matchPercentage}%
@@ -84,7 +84,7 @@ export function ProgramCard({
         {gap && status === "almost" && (
           <div className="mt-3 pt-3 border-t border-gray-100">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-amber-700">Gap:</span>
+              <span className="text-xs font-medium text-amber-500">Gap:</span>
               <span className="text-xs text-gray-600">{gap}</span>
             </div>
           </div>

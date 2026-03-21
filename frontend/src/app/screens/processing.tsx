@@ -50,8 +50,8 @@ export function Processing() {
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center">
         <div className="mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
           <h2 className="text-2xl font-semibold text-gray-900">
             Finding your matches
@@ -67,12 +67,12 @@ export function Processing() {
               }`}
             >
               {step.status === "done" ? (
-                <div className="flex-shrink-0 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                <div className="flex-shrink-0 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
                   <Check className="w-3 h-3 text-white" />
                 </div>
               ) : step.status === "processing" ? (
                 <div className="flex-shrink-0 w-5 h-5">
-                  <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                  <Loader2 className="w-5 h-5 text-primary animate-spin" />
                 </div>
               ) : (
                 <div className="flex-shrink-0 w-5 h-5 bg-gray-300 rounded-full" />
@@ -82,7 +82,7 @@ export function Processing() {
                   step.status === "done"
                     ? "text-gray-900 font-medium"
                     : step.status === "processing"
-                    ? "text-blue-600 font-medium"
+                    ? "text-primary font-medium"
                     : "text-gray-500"
                 }`}
               >

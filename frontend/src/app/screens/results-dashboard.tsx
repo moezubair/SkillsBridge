@@ -29,7 +29,7 @@ export function ResultsDashboard() {
       <NavBar />
 
       {/* Summary Bar */}
-      <div className="bg-blue-50 border-b border-blue-100">
+      <div className="bg-primary/5 border-b border-primary/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-wrap items-center gap-4 text-sm sm:text-base">
             <span className="font-semibold text-gray-900">
@@ -56,7 +56,7 @@ export function ResultsDashboard() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search programs or universities..."
-              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </div>
 
@@ -99,7 +99,7 @@ export function ResultsDashboard() {
             onClick={() => setActiveTab("eligible")}
             className={`flex-1 sm:flex-none px-6 py-2.5 rounded-md font-medium transition-colors ${
               activeTab === "eligible"
-                ? "bg-green-100 text-green-700"
+                ? "bg-green-50 text-green-600"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
@@ -109,7 +109,7 @@ export function ResultsDashboard() {
             onClick={() => setActiveTab("almost")}
             className={`flex-1 sm:flex-none px-6 py-2.5 rounded-md font-medium transition-colors ${
               activeTab === "almost"
-                ? "bg-amber-100 text-amber-700"
+                ? "bg-amber-50 text-amber-600"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
@@ -134,7 +134,7 @@ export function ResultsDashboard() {
         {activeTab === "almost" && almostTherePrograms.length > 0 && (
           <Link
             to="/study-plan"
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium"
           >
             View my study plan
             <ArrowRight className="w-4 h-4" />

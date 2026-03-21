@@ -27,7 +27,7 @@ export function PriorityActionCard({
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-5">
       <div className="flex items-start gap-4">
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold text-sm">
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-sm">
           {priority}
         </div>
         <div className="flex-1 min-w-0">
@@ -38,10 +38,10 @@ export function PriorityActionCard({
             </span>
           </div>
           <div className="flex flex-wrap gap-2 mb-3">
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-600">
               Unlocks {impactCount} programs
             </span>
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
               {timeEstimate}
             </span>
           </div>
@@ -55,7 +55,7 @@ export function PriorityActionCard({
                   href={resource.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+                  className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80"
                 >
                   {resource.label}
                   <ExternalLink className="w-3 h-3" />

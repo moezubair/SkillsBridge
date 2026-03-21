@@ -18,9 +18,9 @@ export function ProgressStepper({ steps }: ProgressStepperProps) {
             <div
               className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-colors ${
                 step.status === "done"
-                  ? "bg-green-500 text-white"
+                  ? "bg-primary text-white"
                   : step.status === "active"
-                  ? "bg-blue-500 text-white"
+                  ? "bg-primary text-white"
                   : "bg-gray-200 text-gray-500"
               }`}
             >
@@ -43,7 +43,7 @@ export function ProgressStepper({ steps }: ProgressStepperProps) {
           {index < steps.length - 1 && (
             <div
               className={`w-8 sm:w-16 h-0.5 mb-6 ${
-                step.status === "done" ? "bg-green-500" : "bg-gray-200"
+                step.status === "done" ? "bg-primary" : "bg-gray-200"
               }`}
             />
           )}

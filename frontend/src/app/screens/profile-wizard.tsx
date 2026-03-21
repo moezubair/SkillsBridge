@@ -88,7 +88,7 @@ export function ProfileWizard() {
           <div className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               {/* Upload Card */}
-              <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 p-8 text-center hover:border-blue-400 transition-colors cursor-pointer">
+              <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 p-8 text-center hover:border-primary/40 transition-colors cursor-pointer">
                 <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="font-semibold text-gray-900 mb-2">
                   Upload Transcript
@@ -96,7 +96,7 @@ export function ProfileWizard() {
                 <p className="text-sm text-gray-600 mb-4">
                   Drag and drop your PDF here
                 </p>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
                   Choose File
                 </button>
                 <p className="text-xs text-gray-500 mt-4">
@@ -117,7 +117,7 @@ export function ProfileWizard() {
                     <select
                       value={gradingScale}
                       onChange={(e) => setGradingScale(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     >
                       <option value="vn-10">Vietnamese (10-point)</option>
                       <option value="us-4.0">US (4.0 GPA)</option>
@@ -165,7 +165,7 @@ export function ProfileWizard() {
 
                   <button
                     onClick={addSubject}
-                    className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                    className="text-sm text-primary hover:text-primary/80 flex items-center gap-1"
                   >
                     <Plus className="w-4 h-4" />
                     Add subject
@@ -202,7 +202,7 @@ export function ProfileWizard() {
                 value={career}
                 onChange={(e) => setCareer(e.target.value)}
                 placeholder="Search careers..."
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
 
@@ -229,11 +229,11 @@ export function ProfileWizard() {
                 {majors.map((major) => (
                   <span
                     key={major}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm"
                   >
                     {major}
                     <X
-                      className="w-3.5 h-3.5 cursor-pointer hover:text-blue-900"
+                      className="w-3.5 h-3.5 cursor-pointer hover:text-primary/70"
                       onClick={() => removeMajor(major)}
                     />
                   </span>
@@ -281,7 +281,7 @@ export function ProfileWizard() {
                         type="checkbox"
                         checked={regions.includes(region)}
                         onChange={() => toggleRegion(region)}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                        className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
                       />
                       <span className="text-sm text-gray-700">{region}</span>
                     </label>
@@ -318,7 +318,7 @@ export function ProfileWizard() {
                   onClick={() => setDegree("bachelor")}
                   className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
                     degree === "bachelor"
-                      ? "bg-blue-600 text-white"
+                      ? "bg-primary text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
@@ -328,7 +328,7 @@ export function ProfileWizard() {
                   onClick={() => setDegree("master")}
                   className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
                     degree === "master"
-                      ? "bg-blue-600 text-white"
+                      ? "bg-primary text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
@@ -388,7 +388,7 @@ export function ProfileWizard() {
           </button>
           <button
             onClick={handleNext}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            className="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors"
           >
             {currentStep === 3 ? "Find my programs" : "Next"}
           </button>

@@ -21,7 +21,7 @@ export function Landing() {
             </p>
             <Link
               to="/wizard"
-              className="inline-flex items-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-lg"
+              className="inline-flex items-center gap-2 bg-primary text-white px-8 py-4 rounded-lg font-semibold hover:bg-primary/90 transition-colors text-lg"
             >
               Get started — free
               <ArrowRight className="w-5 h-5" />
@@ -47,8 +47,8 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-3 gap-8 sm:gap-12">
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-2xl mb-6">
-                <Upload className="w-8 h-8 text-blue-600" />
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-2xl mb-6">
+                <Upload className="w-8 h-8 text-primary" />
               </div>
               <h3 className="text-xl font-semibold mb-3">Upload transcript</h3>
               <p className="text-gray-600">
@@ -57,8 +57,8 @@ export function Landing() {
               </p>
             </div>
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-2xl mb-6">
-                <Target className="w-8 h-8 text-green-600" />
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-accent/10 rounded-2xl mb-6">
+                <Target className="w-8 h-8 text-accent" />
               </div>
               <h3 className="text-xl font-semibold mb-3">See matches</h3>
               <p className="text-gray-600">
@@ -67,8 +67,8 @@ export function Landing() {
               </p>
             </div>
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-2xl mb-6">
-                <TrendingUp className="w-8 h-8 text-purple-600" />
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/20 rounded-2xl mb-6">
+                <TrendingUp className="w-8 h-8 text-primary" />
               </div>
               <h3 className="text-xl font-semibold mb-3">Close gaps</h3>
               <p className="text-gray-600">
@@ -82,16 +82,16 @@ export function Landing() {
 
       {/* CTA Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-        <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl p-8 sm:p-12 text-center text-white">
+        <div className="bg-gradient-to-br from-[#9B1B30] to-[#7A1420] rounded-2xl p-8 sm:p-12 text-center text-white">
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">
             Ready to find your perfect program?
           </h2>
-          <p className="text-lg sm:text-xl mb-8 text-blue-100">
+          <p className="text-lg sm:text-xl mb-8 text-white/80">
             Join thousands of students who found their dream university
           </p>
           <Link
             to="/wizard"
-            className="inline-flex items-center gap-2 bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors text-lg"
+            className="inline-flex items-center gap-2 bg-white text-primary px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors text-lg"
           >
             Start now — it's free
             <ArrowRight className="w-5 h-5" />

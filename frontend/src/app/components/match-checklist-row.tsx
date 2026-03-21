@@ -12,19 +12,19 @@ export function MatchChecklistRow({ label, required, yours, met }: MatchChecklis
     <div className="flex items-start gap-3 py-3 border-b border-gray-100 last:border-0">
       <div
         className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${
-          met ? "bg-green-100" : "bg-amber-100"
+          met ? "bg-green-50" : "bg-amber-50"
         }`}
       >
         {met ? (
-          <Check className="w-3.5 h-3.5 text-green-600" />
+          <Check className="w-3.5 h-3.5 text-green-500" />
         ) : (
-          <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+          <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
         )}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline justify-between gap-2">
           <span className="font-medium text-gray-900">{label}</span>
-          <span className={`text-sm ${met ? "text-green-600" : "text-amber-600"}`}>
+          <span className={`text-sm ${met ? "text-green-500" : "text-amber-500"}`}>
             {met ? "Met" : "Gap"}
           </span>
         </div>

@@ -13,7 +13,7 @@ export function FilterPill({ label, active, onRemove, onClick }: FilterPillProps
       onClick={onClick}
       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
         active
-          ? "bg-blue-100 text-blue-700 border border-blue-200"
+          ? "bg-primary/10 text-primary border border-primary/20"
           : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
       }`}
     >
