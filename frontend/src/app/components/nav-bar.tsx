@@ -31,6 +31,12 @@ export function NavBar({ showBack, title }: NavBarProps) {
 
           <div className="flex items-center gap-4">
             <Link
+              to="/upload"
+              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Upload PDF
+            </Link>
+            <Link
               to="/study-plan"
               className="hidden sm:block text-sm text-gray-600 hover:text-gray-900 transition-colors"
             >

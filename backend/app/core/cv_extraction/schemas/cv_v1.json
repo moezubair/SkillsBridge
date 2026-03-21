@@ -1,0 +1,104 @@
+{
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "Candidate full name as shown on the CV header or signature."
+    },
+    "email": {
+      "type": "string",
+      "description": "Primary email address for contact."
+    },
+    "phone": {
+      "type": "string",
+      "description": "Primary phone number including country code if present."
+    },
+    "location": {
+      "type": "string",
+      "description": "City, region, or country the candidate lists as their base."
+    },
+    "professional_summary": {
+      "type": "string",
+      "description": "Short professional profile, objective, or summary paragraph."
+    },
+    "years_of_experience": {
+      "type": "number",
+      "description": "Total years of professional experience as stated or implied; use null if unclear."
+    },
+    "technical_skills": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Technical and tool skills: languages, frameworks, databases, DevOps tools."
+    },
+    "programming_languages": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Programming or scripting languages only (e.g. Python, JavaScript)."
+    },
+    "frameworks_and_libraries": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Frameworks and major libraries (e.g. React, FastAPI, TensorFlow)."
+    },
+    "cloud_and_infrastructure": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Cloud platforms and infrastructure (AWS, Azure, GCP, Kubernetes, Docker)."
+    },
+    "soft_skills": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Interpersonal and workplace skills (leadership, communication, teamwork)."
+    },
+    "work_experience": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "company": { "type": "string", "description": "Employer or organization name." },
+          "title": { "type": "string", "description": "Job title or role." },
+          "start_date": { "type": "string", "description": "Start date as written (month/year or year)." },
+          "end_date": { "type": "string", "description": "End date, or Present if current role." },
+          "highlights": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Key achievements or responsibilities as bullet points."
+          }
+        },
+        "required": ["company", "title"]
+      },
+      "description": "Employment history in reverse chronological order if possible."
+    },
+    "education": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "institution": { "type": "string", "description": "School or university name." },
+          "degree": { "type": "string", "description": "Degree or qualification (BSc, MSc, etc.)." },
+          "field": { "type": "string", "description": "Major or field of study." },
+          "year": { "type": "string", "description": "Graduation year or date range." }
+        },
+        "required": ["institution"]
+      },
+      "description": "Formal education entries."
+    },
+    "certifications": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Professional certifications and licenses."
+    },
+    "languages": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Human languages and proficiency if stated (e.g. English — Native)."
+    }
+  },
+  "required": [
+    "full_name",
+    "technical_skills",
+    "soft_skills",
+    "work_experience",
+    "education"
+  ]
+}

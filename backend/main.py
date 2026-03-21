@@ -11,6 +11,9 @@ from app.config.settings import get_settings
 from app.core.exceptions import AppException
 from app.core.postgres_client import PostgresClient
 from app.core.redis_client import RedisClient
+from app.core.cv_extraction.db_schema import ensure_cv_extractions_table
+from app.core.landingai.ade_client import AdeClient
+from app.core.upload.schema import ensure_uploaded_files_table
 
 
 @asynccontextmanager
@@ -32,6 +35,16 @@ async def lifespan(app: FastAPI):
     app.state.postgres_client = postgres_client
     logger.info("PostgreSQL connected")
 
+    await ensure_uploaded_files_table(postgres_client.pool)
+    logger.info("Upload schema ready")
+
+    await ensure_cv_extractions_table(postgres_client.pool)
+    logger.info("CV extraction schema ready")
+
+    ade_client = AdeClient()
+    app.state.ade_client = ade_client
+    logger.info("LandingAI ADE client initialized")
+
     yield
 
     # Cleanup
@@ -39,6 +52,9 @@ async def lifespan(app: FastAPI):
     logger.info("Redis disconnected")
     await postgres_client.disconnect()
     logger.info("PostgreSQL disconnected")
+
+    await ade_client.aclose()
+    logger.info("LandingAI ADE client closed")
 
 
 def create_app() -> FastAPI:

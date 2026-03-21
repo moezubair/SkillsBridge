@@ -17,6 +17,7 @@ FastAPI backend with PostgreSQL, async connection pooling, and dependency inject
 │   ├── config/
 │   │   └── settings.py               # Configuration with pydantic-settings
 │   ├── core/
+│   │   ├── upload/                   # PDF validation, disk storage, upload service
 │   │   ├── redis_client.py           # Redis connection manager
 │   │   ├── postgres_client.py        # PostgreSQL connection pool
 │   │   └── exceptions.py             # Custom exceptions
@@ -32,6 +33,9 @@ FastAPI backend with PostgreSQL, async connection pooling, and dependency inject
 │   ├── docker-compose.yml            # Full stack (app + postgres)
 │   └── docker-compose.dev.yml        # Postgres only (for local dev)
 ├── main.py                           # Application entry point
+├── run.ps1                           # Windows PowerShell: pick venv, run API
+├── run.bat                           # Windows CMD: same
+├── run.sh                            # macOS/Linux/Git Bash: same
 ├── Makefile
 ├── Dockerfile
 ├── requirements.txt
@@ -69,11 +73,30 @@ pip install -r requirements.txt
 
 **Option A — Local development (recommended)**
 
-Start only Postgres, run the app yourself:
+Start only Postgres, then start the API:
 
 ```bash
-make dev          # starts postgres in docker
-python main.py    # runs the fastapi app locally
+make dev          # starts postgres in docker (needs Docker + make)
+```
+
+**Run the API (recommended — uses the right Python on Windows):**
+
+| Shell | Command |
+|-------|---------|
+| PowerShell | `.\run.ps1` (if execution policy blocks scripts: `powershell -ExecutionPolicy Bypass -File .\run.ps1`) |
+| CMD | `run.bat` |
+| macOS / Linux / WSL | `chmod +x run.sh && ./run.sh` |
+
+These scripts run `main.py` using, in order:
+
+1. `../.lotushack` (repo virtualenv next to `backend/`)
+2. `./venv` (classic `python -m venv venv` inside `backend/`)
+3. `python` on your `PATH` (last resort — ensure it has `pip install -r requirements.txt`)
+
+Equivalent manual command (after `Activate.ps1` / `source venv/bin/activate` so `python` is the venv):
+
+```bash
+python main.py
 ```
 
 **Option B — Full Docker stack**
@@ -96,6 +119,18 @@ The API will be available at `http://localhost:8000`.
 | `make ps`    | Show running containers                  |
 
 ## API Endpoints
+
+### PDF uploads
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/files/upload` | Multipart field `file` (PDF only); saves bytes under `UPLOAD_ROOT`, metadata in `uploaded_files` |
+| `GET` | `/api/v1/files/{uuid}` | JSON metadata for a stored file |
+| `GET` | `/api/v1/files/{uuid}/download` | Streams the PDF with original filename |
+| `POST` | `/api/v1/files/{uuid}/extract-cv` | LandingAI ADE: parse PDF → markdown → extract by `cv_v1` schema; persists `cv_extractions` |
+| `GET` | `/api/v1/files/{uuid}/cv-extraction` | Latest extraction row (includes `extraction` JSON and metadata) |
+
+Query param on extract: `schema_version` (default `cv_v1`). Requires `LANDINGAI_API_KEY`.
 
 ### Health Check
 
@@ -137,6 +172,10 @@ See `.env.example` for all options.
 | `POSTGRES_DB`       | app_db           | Database name              |
 | `POSTGRES_USER`     | postgres         | Database user              |
 | `POSTGRES_PASSWORD` | postgres         | Database password          |
+| `LANDINGAI_API_KEY` | (empty)          | Required for `/extract-cv` |
+| `LANDINGAI_BASE_URL` | `https://api.va.landing.ai` | ADE API host        |
+| `LANDINGAI_PARSE_MODEL` | `dpt-2-latest` | PDF → markdown model   |
+| `LANDINGAI_EXTRACT_MODEL` | `extract-latest` | Schema extract model |
 
 ## Testing
 

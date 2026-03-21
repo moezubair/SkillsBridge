@@ -5,6 +5,7 @@ import { Processing } from "./screens/processing";
 import { ResultsDashboard } from "./screens/results-dashboard";
 import { ProgramDetail } from "./screens/program-detail";
 import { StudyPlan } from "./screens/study-plan";
+import { PdfUploadScreen } from "./screens/pdf-upload";
 import { NotFound } from "./screens/not-found";
 
 export const router = createBrowserRouter([
@@ -31,6 +32,10 @@ export const router = createBrowserRouter([
   {
     path: "/study-plan",
     Component: StudyPlan,
+  },
+  {
+    path: "/upload",
+    Component: PdfUploadScreen,
   },
   {
     path: "*",
