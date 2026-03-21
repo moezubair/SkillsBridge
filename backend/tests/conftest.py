@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock
 
 import pytest
+import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from app.core.postgres_client import PostgresClient
@@ -34,7 +35,7 @@ def mock_postgres():
     return _make_mock_postgres()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client(mock_redis, mock_postgres):
     app.dependency_overrides[get_redis] = lambda: mock_redis
     app.dependency_overrides[get_postgres] = lambda: mock_postgres

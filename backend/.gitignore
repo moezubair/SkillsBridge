@@ -22,3 +22,6 @@ htmlcov/
 # IDE
 .vscode/
 .idea/
+
+# Uploaded PDF blobs (metadata lives in Postgres)
+storage/
