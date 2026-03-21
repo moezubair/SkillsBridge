@@ -42,8 +42,11 @@ type JobListingOut = {
 
 type JobSearchRunOut = {
   id: string;
-  file_id: string;
+  job_file_id: string;
   status: string;
+  started_at: string;
+  finished_at: string | null;
+  error_message: string | null;
   tinyfish_run_id: string | null;
 };
 
@@ -67,8 +70,8 @@ function splitList(s: string): string[] {
 
 export function JobMatchScreen() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const fileIdParam = searchParams.get("file_id") ?? "";
-  const [fileId, setFileId] = useState(fileIdParam);
+  const jobFileIdParam = searchParams.get("job_file_id") ?? "";
+  const [jobFileId, setJobFileId] = useState(jobFileIdParam);
   const titlesId = useId();
   const locsId = useId();
   const kwId = useId();
@@ -91,28 +94,28 @@ export function JobMatchScreen() {
   const syncUrl = useCallback(
     (id: string) => {
       const next = new URLSearchParams(searchParams);
-      if (id.trim()) next.set("file_id", id.trim());
-      else next.delete("file_id");
+      if (id.trim()) next.set("job_file_id", id.trim());
+      else next.delete("job_file_id");
       setSearchParams(next, { replace: true });
     },
     [searchParams, setSearchParams],
   );
 
   useEffect(() => {
-    setFileId(fileIdParam);
-  }, [fileIdParam]);
+    setJobFileId(jobFileIdParam);
+  }, [jobFileIdParam]);
 
   const loadPrefs = useCallback(async () => {
-    const id = fileId.trim();
+    const id = jobFileId.trim();
     if (!id) {
-      toast.error("Enter a file id (from Upload PDF).");
+      toast.error("Enter a job file id (from CV upload).");
       return;
     }
     syncUrl(id);
     setLoadingPrefs(true);
     try {
       const res = await fetch(
-        `/api/v1/job-preferences?file_id=${encodeURIComponent(id)}`,
+        `/api/v1/job-preferences?job_file_id=${encodeURIComponent(id)}`,
       );
       const payload = await res.json().catch(() => null);
       if (!res.ok) {
@@ -163,12 +166,12 @@ export function JobMatchScreen() {
     } finally {
       setLoadingPrefs(false);
     }
-  }, [fileId, syncUrl]);
+  }, [jobFileId, syncUrl]);
 
   async function savePrefs() {
-    const id = fileId.trim();
+    const id = jobFileId.trim();
     if (!id) {
-      toast.error("Enter a file id first.");
+      toast.error("Enter a job file id first.");
       return;
     }
     syncUrl(id);
@@ -183,7 +186,7 @@ export function JobMatchScreen() {
     setSavingPrefs(true);
     try {
       const res = await fetch(
-        `/api/v1/job-preferences?file_id=${encodeURIComponent(id)}`,
+        `/api/v1/job-preferences?job_file_id=${encodeURIComponent(id)}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -206,9 +209,9 @@ export function JobMatchScreen() {
   }
 
   async function runSearch() {
-    const id = fileId.trim();
+    const id = jobFileId.trim();
     if (!id) {
-      toast.error("Enter a file id first.");
+      toast.error("Enter a job file id first.");
       return;
     }
     syncUrl(id);
@@ -219,7 +222,7 @@ export function JobMatchScreen() {
       const res = await fetch("/api/v1/jobs/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ file_id: id }),
+        body: JSON.stringify({ job_file_id: id }),
       });
       const payload = await res.json().catch(() => null);
       if (!res.ok) {
@@ -259,12 +262,12 @@ export function JobMatchScreen() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="file-id">CV file id</Label>
+              <Label htmlFor="job-file-id">Job upload id</Label>
               <Input
-                id="file-id"
-                value={fileId}
-                onChange={(e) => setFileId(e.target.value)}
-                placeholder="UUID from Upload PDF"
+                id="job-file-id"
+                value={jobFileId}
+                onChange={(e) => setJobFileId(e.target.value)}
+                placeholder="UUID from CV upload"
                 className="font-mono text-sm"
               />
               <div className="flex gap-2 flex-wrap">

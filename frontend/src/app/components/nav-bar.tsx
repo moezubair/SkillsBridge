@@ -34,13 +34,25 @@ export function NavBar({ showBack, title }: NavBarProps) {
               to="/upload"
               className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
             >
-              Upload PDF
+              CV upload
+            </Link>
+            <Link
+              to="/upload/school"
+              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Transcript
             </Link>
             <Link
               to="/jobs"
               className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
             >
               Jobs
+            </Link>
+            <Link
+              to="/harvard"
+              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Harvard
             </Link>
             <Link
               to="/study-plan"

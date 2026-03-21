@@ -1,26 +1,24 @@
-"""Run LandingAI parse + extract on a stored PDF and persist structured CV data."""
+"""Run LandingAI parse + extract on a stored transcript PDF."""
 
 from uuid import UUID
 
 import httpx
 
 from app.config.settings import Settings
-from app.core.cv_extraction import SCHEMA_VERSION_CV_V1, load_cv_schema
+from app.core.cv_extraction import SCHEMA_VERSION_TRANSCRIPT_V1, load_transcript_schema
 from app.core.exceptions import AppException, BadRequestException
 from app.core.landingai.ade_client import AdeClient, AdeExtractResult, LandingAiApiError
 from app.core.upload import ScopedFileUploadService
-from app.models.cv_extraction import CvExtractionDetail
-from app.repositories.cv_extraction_repository import CvExtractionRepository
+from app.models.transcript_extraction import TranscriptExtractionDetail
+from app.repositories.transcript_extraction_repository import TranscriptExtractionRepository
 
 
-class CvExtractionService:
-    """Coordinates file read → ADE parse → ADE extract → DB insert."""
-
+class TranscriptExtractionService:
     def __init__(
         self,
         files: ScopedFileUploadService,
         ade: AdeClient,
-        repository: CvExtractionRepository,
+        repository: TranscriptExtractionRepository,
         settings: Settings,
     ) -> None:
         self._files = files
@@ -28,24 +26,30 @@ class CvExtractionService:
         self._repository = repository
         self._settings = settings
 
-    async def extract_cv(self, file_id: UUID, schema_version: str = SCHEMA_VERSION_CV_V1) -> CvExtractionDetail:
+    async def extract_transcript(
+        self,
+        file_id: UUID,
+        schema_version: str = SCHEMA_VERSION_TRANSCRIPT_V1,
+    ) -> TranscriptExtractionDetail:
         if not self._settings.LANDINGAI_API_KEY.strip():
             raise AppException(
                 message="LandingAI is not configured (set LANDINGAI_API_KEY)",
                 status_code=503,
             )
         try:
-            schema = load_cv_schema(schema_version)
+            schema = load_transcript_schema(schema_version)
         except ValueError as exc:
             raise BadRequestException(message=str(exc)) from exc
         pdf_bytes, record = await self._files.read_stored_pdf(
             file_id,
             not_found_message=(
-                "No job (CV) upload with this id. "
-                "Upload a PDF with POST /api/v1/job/files/upload (multipart field `file`), "
-                "then call extract-cv with the returned `id`."
+                "No school transcript upload with this id. "
+                "Upload a PDF with POST /api/v1/school/files/upload (multipart field `file`), "
+                "then call extract-transcript with the returned `id`."
             ),
-            missing_bytes_message="CV PDF bytes missing on disk for this job upload id.",
+            missing_bytes_message=(
+                "Transcript PDF bytes missing on disk for this school upload id."
+            ),
         )
         try:
             parsed = await self._ade.parse_pdf(pdf_bytes, record.original_filename)
@@ -71,26 +75,25 @@ class CvExtractionService:
             )
         except Exception as exc:
             raise AppException(
-                message=f"Failed to save extraction: {exc}",
+                message=f"Failed to save transcript extraction: {exc}",
                 status_code=500,
             ) from exc
 
         try:
-            await self._files.save_cv_extraction_json(detail)
+            await self._files.save_transcript_extraction_json(detail)
         except Exception as exc:
             raise AppException(
-                message=f"Extraction saved to database but failed to write JSON file: {exc}",
+                message=f"Transcript saved to database but failed to write JSON file: {exc}",
                 status_code=500,
             ) from exc
 
         return detail
 
-    async def get_latest(self, file_id: UUID) -> CvExtractionDetail | None:
+    async def get_latest(self, file_id: UUID) -> TranscriptExtractionDetail | None:
         return await self._repository.get_latest_for_file(file_id)
 
 
 def _derive_status(parse_http_status: int, extracted: AdeExtractResult) -> str:
-    """Mark partial when parse/extract returned 206 or schema validation warnings."""
     violation = extracted.metadata.get("schema_violation_error")
     if parse_http_status == 206 or extracted.http_status == 206 or violation:
         return "partial"

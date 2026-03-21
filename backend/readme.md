@@ -120,17 +120,53 @@ The API will be available at `http://localhost:8000`.
 
 ## API Endpoints
 
-### PDF uploads
+### PDF uploads (job vs school)
+
+**Job (CV / career)** — metadata in `job_uploaded_files`, files under `UPLOAD_ROOT/jobs/…`.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/api/v1/files/upload` | Multipart field `file` (PDF only); saves bytes under `UPLOAD_ROOT`, metadata in `uploaded_files` |
-| `GET` | `/api/v1/files/{uuid}` | JSON metadata for a stored file |
-| `GET` | `/api/v1/files/{uuid}/download` | Streams the PDF with original filename |
-| `POST` | `/api/v1/files/{uuid}/extract-cv` | LandingAI ADE: parse PDF → markdown → extract by `cv_v1` schema; persists `cv_extractions` |
-| `GET` | `/api/v1/files/{uuid}/cv-extraction` | Latest extraction row (includes `extraction` JSON and metadata) |
+| `POST` | `/api/v1/job/files/upload` | Multipart `file` (PDF); `jobs/{uuid}.pdf` |
+| `GET` | `/api/v1/job/files/{job_file_id}` | JSON metadata |
+| `GET` | `/api/v1/job/files/{job_file_id}/download` | Stream PDF |
+| `POST` | `/api/v1/job/files/{job_file_id}/extract-cv` | LandingAI CV extract → `cv_extractions` |
+| `GET` | `/api/v1/job/files/{job_file_id}/cv-extraction` | Latest CV extraction row |
 
-Query param on extract: `schema_version` (default `cv_v1`). Requires `LANDINGAI_API_KEY`.
+**School (transcript)** — metadata in `school_uploaded_files`, files under `UPLOAD_ROOT/school/…`.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/school/files/upload` | Multipart `file` (PDF); `school/{uuid}.pdf` |
+| `GET` | `/api/v1/school/files/{school_file_id}` | JSON metadata |
+| `GET` | `/api/v1/school/files/{school_file_id}/download` | Stream PDF |
+| `POST` | `/api/v1/school/files/{school_file_id}/extract-transcript` | LandingAI transcript extract → `transcript_extractions` |
+| `GET` | `/api/v1/school/files/{school_file_id}/transcript-extraction` | Latest transcript row |
+
+Query param on extract: `schema_version` (`cv_v1` / `transcript_v1`). Requires `LANDINGAI_API_KEY`.
+
+Downstream: `job_file_id` on `/api/v1/job-preferences`, `/api/v1/jobs/search`; `school_file_id` on `/api/v1/student-extras`, `/api/v1/school-matches/harvard`.
+
+### TinyFish: job search vs Harvard school match
+
+Both flows stay **separate** (different uploads, repos, and file ids). They share only the **TinyFish client** pattern: **one** automation run per request — URL + natural-language goal → agent output coerced to JSON.
+
+| Flow | URL setting | Goal built from | Primary outcome |
+|------|-------------|-----------------|-----------------|
+| Job search | `TINYFISH_JOB_SEARCH_URL` | CV extraction + job preferences (DB) | Structured job listing JSON → normalized |
+| Harvard match | `HARVARD_CATALOG_URL` | Latest transcript extraction + optional IELTS/skills from **student_extras** row | Ranked majors JSON → `HarvardMatchResponse` |
+
+**Harvard** `POST /api/v1/school-matches/harvard` body (IDs only):
+
+- `school_file_id` (optional) — transcript upload id; loads latest transcript extraction from `transcript_extractions`.
+- `ielts_id` (optional) — UUID of a row in `student_extras` (returned by `PUT`/`GET` `/api/v1/student-extras`). Loads IELTS + skills from Postgres (JSONB on that row, not a separate file). If `school_file_id` is omitted, it is inferred from this row. If both are sent, they must refer to the same upload or the API returns 404.
+
+At least one of `school_file_id` or `ielts_id` is required.
+
+Seed major names from `app/data/harvard_majors_seed.json` are passed **into the goal text** as context (Option A: no separate TinyFish catalog scrape on the match hot path). If TinyFish is missing, times out, or returns no parseable list, the service falls back to the local heuristic (`catalog_source` will be `heuristic_*`).
+
+Env: `TINYFISH_API_KEY`, `TINYFISH_BASE_URL`, `TINYFISH_SSE_TIMEOUT_SECONDS`, `HARVARD_CATALOG_URL`, `TINYFISH_HARVARD_TIMEOUT_SECONDS`. The Harvard catalog DB cache (`harvard_catalog_cache`) may still exist for other tooling but is **not** used in the match service path.
+
+Legacy table `uploaded_files` is kept only for startup backfill when migrating old rows.
 
 ### Health Check
 

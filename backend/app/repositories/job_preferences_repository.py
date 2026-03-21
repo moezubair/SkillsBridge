@@ -63,7 +63,7 @@ def _coerce_json(value: Any) -> dict[str, Any]:
 def _row_to_record(row: asyncpg.Record) -> JobPreferencesRecord:
     return JobPreferencesRecord(
         id=row["id"],
-        file_id=row["file_id"],
+        job_file_id=row["file_id"],
         preferences=_coerce_json(row["preferences"]),
         updated_at=row["updated_at"],
     )

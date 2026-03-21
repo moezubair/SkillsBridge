@@ -12,7 +12,7 @@ from app.core.jobs.normalize import normalize_one_job
 from app.core.tinyfish.client import TinyFishError, run_with_settings
 from app.models.job import JobSearchResponse
 from app.repositories.cv_extraction_repository import CvExtractionRepository
-from app.repositories.file_repository import FileRepository
+from app.repositories.job_file_repository import JobFileRepository
 from app.repositories.job_discovery_repository import JobDiscoveryRepository
 from app.repositories.job_preferences_repository import JobPreferencesRepository
 
@@ -21,7 +21,7 @@ class JobSearchService:
     def __init__(
         self,
         settings: Settings,
-        files: FileRepository,
+        files: JobFileRepository,
         cv_repo: CvExtractionRepository,
         prefs_repo: JobPreferencesRepository,
         discovery: JobDiscoveryRepository,
@@ -61,7 +61,7 @@ class JobSearchService:
                 location="job_search_service.py:run_search:pre_tinyfish",
                 message="about to call TinyFish",
                 data={
-                    "file_id": str(file_id),
+                    "job_file_id": str(file_id),
                     "search_url": search_url[:120],
                     "goal_len": len(goal),
                     "api_key_configured": bool(

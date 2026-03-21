@@ -9,7 +9,7 @@ async def ensure_job_tables(pool: asyncpg.Pool) -> None:
             """
             CREATE TABLE IF NOT EXISTS user_job_preferences (
                 id UUID PRIMARY KEY,
-                file_id UUID NOT NULL UNIQUE REFERENCES uploaded_files(id) ON DELETE CASCADE,
+                file_id UUID NOT NULL UNIQUE REFERENCES job_uploaded_files(id) ON DELETE CASCADE,
                 preferences JSONB NOT NULL DEFAULT '{}'::jsonb,
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
@@ -25,7 +25,7 @@ async def ensure_job_tables(pool: asyncpg.Pool) -> None:
             """
             CREATE TABLE IF NOT EXISTS job_search_runs (
                 id UUID PRIMARY KEY,
-                file_id UUID NOT NULL REFERENCES uploaded_files(id) ON DELETE CASCADE,
+                file_id UUID NOT NULL REFERENCES job_uploaded_files(id) ON DELETE CASCADE,
                 status TEXT NOT NULL,
                 started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 finished_at TIMESTAMPTZ,
