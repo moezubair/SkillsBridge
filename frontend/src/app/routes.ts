@@ -7,6 +7,9 @@ import { Processing } from "./screens/processing";
 import { ResultsDashboard } from "./screens/results-dashboard";
 import { ProgramDetail } from "./screens/program-detail";
 import { StudyPlan } from "./screens/study-plan";
+import { Profile } from "./screens/profile";
+import { Portfolio } from "./screens/portfolio";
+import { Settings } from "./screens/settings";
 import { NotFound } from "./screens/not-found";
 
 export const router = createBrowserRouter([
@@ -41,6 +44,18 @@ export const router = createBrowserRouter([
   {
     path: "/study-plan",
     Component: StudyPlan,
+  },
+  {
+    path: "/profile",
+    Component: Profile,
+  },
+  {
+    path: "/portfolio",
+    Component: Portfolio,
+  },
+  {
+    path: "/settings",
+    Component: Settings,
   },
   {
     path: "*",

@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Linkedin, Trophy, Briefcase, Award, Star, GraduationCap } from "lucide-react";
 import { Link } from "react-router";
 import { motion } from "motion/react";
 import { NavBar } from "../components/nav-bar";
@@ -25,6 +25,15 @@ const steps = [
   },
 ];
 
+const dataSources = [
+  { name: "LinkedIn", subtitle: "Job postings", Icon: Linkedin },
+  { name: "QS Rankings", subtitle: "University rankings", Icon: Trophy },
+  { name: "Indeed", subtitle: "Job postings", Icon: Briefcase },
+  { name: "Times Higher Education", subtitle: "University rankings", Icon: Award },
+  { name: "Glassdoor", subtitle: "Reviews & salaries", Icon: Star },
+  { name: "Google Scholar", subtitle: "Academic research", Icon: GraduationCap },
+];
+
 export function Landing() {
   return (
     <div className="min-h-screen bg-white">
@@ -35,7 +44,7 @@ export function Landing() {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
             <p className="text-primary font-semibold tracking-wide text-sm uppercase mb-4">
-              2,400+ programs · 35 countries
+              2400+ programs, across 50+ countries
             </p>
             <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-gray-900 leading-[1.1] mb-6 tracking-tight">
               Find every program you can get into
@@ -60,6 +69,48 @@ export function Landing() {
               alt="University campus with students"
               className="rounded-2xl shadow-2xl w-full"
             />
+          </div>
+        </div>
+      </section>
+
+      {/* Powered by data from */}
+      <section className="border-t border-gray-100 bg-gray-50/60 py-12 sm:py-16">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.5 }}
+            transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+            className="text-center text-sm font-medium uppercase tracking-wider text-gray-400 mb-8"
+          >
+            Powered by data from
+          </motion.p>
+
+          <div className="flex flex-wrap justify-between items-center gap-y-6">
+            {dataSources.map((source, i) => (
+              <motion.div
+                key={source.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{
+                  duration: 0.5,
+                  delay: i * 0.08,
+                  ease: [0.25, 0.1, 0.25, 1],
+                }}
+                className="group flex items-center gap-2.5 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300 cursor-default"
+              >
+                <source.Icon className="w-5 h-5 text-gray-500 group-hover:text-[#9B1B30] transition-colors duration-300" />
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-gray-700 group-hover:text-gray-900 transition-colors duration-300 leading-tight">
+                    {source.name}
+                  </span>
+                  <span className="text-[11px] text-gray-400 group-hover:text-gray-500 transition-colors duration-300 leading-tight">
+                    {source.subtitle}
+                  </span>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
