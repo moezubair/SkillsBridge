@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { Check, Loader2 } from "lucide-react";
 
 interface ProcessingStep {
@@ -7,15 +7,31 @@ interface ProcessingStep {
   status: "pending" | "processing" | "done";
 }
 
+const studentSteps = [
+  "Extracted 8 subjects",
+  "Matched 4 majors",
+  "Scanning 2,400 programs...",
+  "Comparing criteria",
+  "Calculating gaps",
+];
+
+const jobSeekerSteps = [
+  "Parsing resume...",
+  "Identifying skills...",
+  "Scanning job listings...",
+  "Matching positions...",
+  "Ranking results...",
+];
+
 export function Processing() {
   const navigate = useNavigate();
-  const [steps, setSteps] = useState<ProcessingStep[]>([
-    { label: "Extracted 8 subjects", status: "pending" },
-    { label: "Matched 4 majors", status: "pending" },
-    { label: "Scanning 2,400 programs...", status: "pending" },
-    { label: "Comparing criteria", status: "pending" },
-    { label: "Calculating gaps", status: "pending" },
-  ]);
+  const location = useLocation();
+  const userType = (location.state as { userType?: string })?.userType;
+  const labels = userType === "job-seeker" ? jobSeekerSteps : studentSteps;
+
+  const [steps, setSteps] = useState<ProcessingStep[]>(
+    labels.map((label) => ({ label, status: "pending" }))
+  );
 
   useEffect(() => {
     const timings = [500, 1000, 1500, 2500, 3500];

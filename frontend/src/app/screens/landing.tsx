@@ -1,36 +1,58 @@
-import { Upload, Target, TrendingUp, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router";
+import { motion } from "motion/react";
 import { NavBar } from "../components/nav-bar";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+
+const steps = [
+  {
+    number: "01",
+    title: "Upload your profile",
+    description:
+      "Drop your transcript or resume. We parse grades, skills, and experience from any format.",
+  },
+  {
+    number: "02",
+    title: "See your matches",
+    description:
+      "Instantly discover programs you qualify for or jobs that fit your skillset — across 35 countries.",
+  },
+  {
+    number: "03",
+    title: "Close the gaps",
+    description:
+      "See exactly what skills or grades to improve, with a personalized plan to unlock more opportunities.",
+  },
+];
 
 export function Landing() {
   return (
     <div className="min-h-screen bg-white">
       <NavBar />
 
-      {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+      {/* Hero */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-16 sm:pb-24">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
-              Find every university program you can get into
+            <p className="text-primary font-semibold tracking-wide text-sm uppercase mb-4">
+              2,400+ programs · 35 countries
+            </p>
+            <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-gray-900 leading-[1.1] mb-6 tracking-tight">
+              Find every program you can get into
             </h1>
-            <p className="text-lg sm:text-xl text-gray-600 mb-8 leading-relaxed">
-              Upload your marks, pick a career. We show you every matching program
-              worldwide — and what to improve to unlock more.
+            <p className="text-lg text-gray-500 mb-10 leading-relaxed max-w-lg">
+              Upload your marks, pick a career direction. We show you every
+              matching program worldwide — and what to improve to unlock more.
             </p>
             <Link
-              to="/wizard"
-              className="inline-flex items-center gap-2 bg-primary text-white px-8 py-4 rounded-lg font-semibold hover:bg-primary/90 transition-colors text-lg"
+              to="/choose"
+              className="group inline-flex items-center gap-3 bg-[#9B1B30] text-white pl-8 pr-6 py-4 rounded-full font-semibold hover:bg-[#7A1420] transition-all text-base"
             >
-              Get started — free
-              <ArrowRight className="w-5 h-5" />
+              Get started for free
+              <span className="flex items-center justify-center w-8 h-8 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                <ArrowRight className="w-4 h-4" />
+              </span>
             </Link>
-            <div className="mt-8 flex items-center gap-6 text-sm text-gray-600">
-              <span className="font-medium">2,400+ programs</span>
-              <span>·</span>
-              <span className="font-medium">35 countries</span>
-            </div>
           </div>
           <div className="hidden lg:block">
             <ImageWithFallback
@@ -43,58 +65,62 @@ export function Landing() {
       </section>
 
       {/* How It Works */}
-      <section className="bg-gray-50 py-16 sm:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8 sm:gap-12">
-            <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-2xl mb-6">
-                <Upload className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Upload transcript</h3>
-              <p className="text-gray-600">
-                Drag and drop your transcript or enter grades manually. We support
-                all grading systems.
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-accent/10 rounded-2xl mb-6">
-                <Target className="w-8 h-8 text-accent" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">See matches</h3>
-              <p className="text-gray-600">
-                Get instant matches with programs you qualify for across 35
-                countries worldwide.
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/20 rounded-2xl mb-6">
-                <TrendingUp className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Close gaps</h3>
-              <p className="text-gray-600">
-                See exactly what to improve to unlock more programs. Get a
-                personalized study plan.
-              </p>
-            </div>
+      <section className="bg-[#9B1B30] py-20 sm:py-28">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative">
+            {/* Continuous pipeline line */}
+            <div className="hidden md:block absolute right-4 top-[3.5rem] bottom-[3.5rem] w-px bg-white/30" />
+
+            {steps.map((step) => (
+              <motion.div
+                key={step.number}
+                initial={{ opacity: 0, y: 48 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.4 }}
+                transition={{
+                  duration: 0.7,
+                  ease: [0.25, 0.1, 0.25, 1],
+                }}
+                className="relative grid md:grid-cols-[80px_1fr] gap-4 md:gap-8 items-baseline py-12 sm:py-16"
+              >
+                <span className="text-6xl sm:text-7xl font-black text-white select-none leading-none">
+                  {step.number}
+                </span>
+                <div>
+                  <h3 className="text-2xl sm:text-3xl font-semibold text-white mb-3 tracking-tight">
+                    {step.title}
+                  </h3>
+                  <p className="text-white/70 text-lg leading-relaxed max-w-md">
+                    {step.description}
+                  </p>
+                </div>
+
+                {/* Pipeline dot */}
+                <div className="hidden md:block absolute right-[0.6875rem] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2 border-white shadow-[0_0_0_4px_rgba(255,255,255,0.15)]" />
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-        <div className="bg-gradient-to-br from-[#9B1B30] to-[#7A1420] rounded-2xl p-8 sm:p-12 text-center text-white">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-            Ready to find your perfect program?
+      {/* CTA */}
+      <section className="border-t border-gray-100">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 tracking-tight">
+            Ready to find your path?
           </h2>
-          <p className="text-lg sm:text-xl mb-8 text-white/80">
-            Join thousands of students who found their dream university
+          <p className="text-lg text-gray-500 mb-10 max-w-md mx-auto">
+            It takes two minutes. Upload your transcript and see what's
+            possible.
           </p>
           <Link
-            to="/wizard"
-            className="inline-flex items-center gap-2 bg-white text-primary px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors text-lg"
+            to="/choose"
+            className="group inline-flex items-center gap-3 bg-[#9B1B30] text-white pl-8 pr-6 py-4 rounded-full font-semibold hover:bg-[#7A1420] transition-all text-base"
           >
             Start now — it's free
-            <ArrowRight className="w-5 h-5" />
+            <span className="flex items-center justify-center w-8 h-8 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+              <ArrowRight className="w-4 h-4" />
+            </span>
           </Link>
         </div>
       </section>

@@ -23,26 +23,14 @@ export function NavBar({ showBack, title }: NavBarProps) {
               </button>
             ) : (
               <Link to="/" className="text-xl font-bold text-white tracking-tight">
-                UniPath
+                SkillsBridge
               </Link>
             )}
             {title && <h1 className="text-lg font-semibold text-white">{title}</h1>}
           </div>
 
           <div className="flex items-center gap-4">
-            <Link
-              to="/upload"
-              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              Upload PDF
-            </Link>
-            <Link
-              to="/jobs"
-              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              Jobs
-            </Link>
-            <Link
+<Link
               to="/study-plan"
               className="hidden sm:block text-sm font-semibold text-white/90 hover:text-white transition-colors uppercase tracking-wide"
             >

@@ -1,12 +1,12 @@
 import { createBrowserRouter } from "react-router";
 import { Landing } from "./screens/landing";
+import { UserTypeSelection } from "./screens/user-type-selection";
 import { ProfileWizard } from "./screens/profile-wizard";
+import { JobSeekerWizard } from "./screens/job-seeker-wizard";
 import { Processing } from "./screens/processing";
 import { ResultsDashboard } from "./screens/results-dashboard";
 import { ProgramDetail } from "./screens/program-detail";
 import { StudyPlan } from "./screens/study-plan";
-import { PdfUploadScreen } from "./screens/pdf-upload";
-import { JobMatchScreen } from "./screens/job-match";
 import { NotFound } from "./screens/not-found";
 
 export const router = createBrowserRouter([
@@ -15,8 +15,16 @@ export const router = createBrowserRouter([
     Component: Landing,
   },
   {
+    path: "/choose",
+    Component: UserTypeSelection,
+  },
+  {
     path: "/wizard",
     Component: ProfileWizard,
+  },
+  {
+    path: "/job-seeker",
+    Component: JobSeekerWizard,
   },
   {
     path: "/processing",
@@ -33,14 +41,6 @@ export const router = createBrowserRouter([
   {
     path: "/study-plan",
     Component: StudyPlan,
-  },
-  {
-    path: "/upload",
-    Component: PdfUploadScreen,
-  },
-  {
-    path: "/jobs",
-    Component: JobMatchScreen,
   },
   {
     path: "*",
