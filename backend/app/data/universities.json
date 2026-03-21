@@ -1,52 +1,8 @@
 [
-  {
-    "name": "Harvard",
-    "url": "https://college.harvard.edu/academics/concentrations",
-    "catalog_url": "https://college.harvard.edu/academics/concentrations"
-  },
-  {
-    "name": "MIT",
-    "url": "https://web.mit.edu/academics",
-    "catalog_url": "https://web.mit.edu/academics"
-  },
+
   {
     "name": "Stanford",
     "url": "https://www.stanford.edu/academics/programs",
     "catalog_url": "https://www.stanford.edu/academics/programs"
-  },
-  {
-    "name": "Yale",
-    "url": "https://www.yale.edu/academics/majors-and-programs",
-    "catalog_url": "https://www.yale.edu/academics/majors-and-programs"
-  },
-  {
-    "name": "Princeton",
-    "url": "https://www.princeton.edu/academics/undergraduate-academics",
-    "catalog_url": "https://www.princeton.edu/academics/undergraduate-academics"
-  },
-  {
-    "name": "University of California, Berkeley",
-    "url": "https://academics.berkeley.edu/programs",
-    "catalog_url": "https://academics.berkeley.edu/programs"
-  },
-  {
-    "name": "Caltech",
-    "url": "https://www.caltech.edu/academics",
-    "catalog_url": "https://www.caltech.edu/academics"
-  },
-  {
-    "name": "Northwestern",
-    "url": "https://www.northwestern.edu/academics/undergraduate",
-    "catalog_url": "https://www.northwestern.edu/academics/undergraduate"
-  },
-  {
-    "name": "Duke",
-    "url": "https://undergrad.duke.edu/majors-minors",
-    "catalog_url": "https://undergrad.duke.edu/majors-minors"
-  },
-  {
-    "name": "University of Pennsylvania",
-    "url": "https://www.upenn.edu/academics",
-    "catalog_url": "https://www.upenn.edu/academics"
-  }
+  } 
 ]
