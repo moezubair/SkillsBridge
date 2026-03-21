@@ -46,6 +46,11 @@ class Settings(BaseSettings):
     TINYFISH_JOB_SEARCH_URL: str = TINYFISH_JOB_SEARCH_URL_DEFAULT
     TINYFISH_SSE_TIMEOUT_SECONDS: float = 180.0
 
+    # Harvard major catalog (TinyFish enriches seed from this public page; respect ToS/robots)
+    HARVARD_CATALOG_URL: str = "https://college.harvard.edu/advising/fields-study"
+    HARVARD_CATALOG_CACHE_TTL_SECONDS: float = 86400.0
+    TINYFISH_HARVARD_TIMEOUT_SECONDS: float = 180.0
+
     @property
     def postgres_dsn(self) -> str:
         return (

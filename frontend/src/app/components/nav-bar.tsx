@@ -43,6 +43,12 @@ export function NavBar({ showBack, title }: NavBarProps) {
               Jobs
             </Link>
             <Link
+              to="/harvard"
+              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Harvard
+            </Link>
+            <Link
               to="/study-plan"
               className="hidden sm:block text-sm text-gray-600 hover:text-gray-900 transition-colors"
             >

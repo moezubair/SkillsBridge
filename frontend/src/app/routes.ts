@@ -7,6 +7,7 @@ import { ProgramDetail } from "./screens/program-detail";
 import { StudyPlan } from "./screens/study-plan";
 import { PdfUploadScreen } from "./screens/pdf-upload";
 import { JobMatchScreen } from "./screens/job-match";
+import { HarvardMatchScreen } from "./screens/harvard-match";
 import { NotFound } from "./screens/not-found";
 
 export const router = createBrowserRouter([
@@ -41,6 +42,10 @@ export const router = createBrowserRouter([
   {
     path: "/jobs",
     Component: JobMatchScreen,
+  },
+  {
+    path: "/harvard",
+    Component: HarvardMatchScreen,
   },
   {
     path: "*",

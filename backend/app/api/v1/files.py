@@ -6,14 +6,21 @@ from fastapi import APIRouter, Depends, File, Query, UploadFile
 from fastapi.responses import FileResponse
 
 from app.config.settings import get_settings
-from app.core.cv_extraction import SCHEMA_VERSION_CV_V1
+from app.core.cv_extraction import SCHEMA_VERSION_CV_V1, SCHEMA_VERSION_TRANSCRIPT_V1
 from app.core.exceptions import BadRequestException, NotFoundException
 from app.core.upload import FileUploadService, IncomingPdfPayload
-from app.dependencies import get_cv_extraction_service, get_file_upload_service
+from app.dependencies import (
+    get_cv_extraction_service,
+    get_file_upload_service,
+    get_transcript_extraction_service,
+)
 from app.models.cv_extraction import CvExtractionDetail, CvExtractionRecord
+from app.models.transcript_extraction import TranscriptExtractionDetail, TranscriptExtractionRecord
 from app.models.file import StoredFile
 from app.repositories.cv_extraction_repository import to_summary
+from app.repositories.transcript_extraction_repository import transcript_to_summary
 from app.services.cv_extraction_service import CvExtractionService
+from app.services.transcript_extraction_service import TranscriptExtractionService
 
 router = APIRouter()
 
@@ -78,6 +85,51 @@ async def get_latest_cv_extraction(
     if not record:
         raise NotFoundException(message="No CV extraction found for this file")
     return record
+
+
+@router.post("/{file_id}/extract-transcript", response_model=TranscriptExtractionRecord)
+async def extract_transcript_from_uploaded_pdf(
+    file_id: UUID,
+    schema_version: str = Query(
+        default=SCHEMA_VERSION_TRANSCRIPT_V1,
+        description="Built-in schema version (e.g. transcript_v1)",
+    ),
+    svc: TranscriptExtractionService = Depends(get_transcript_extraction_service),
+):
+    """Parse PDF with LandingAI ADE using transcript schema; persist to transcript_extractions."""
+    detail = await svc.extract_transcript(file_id, schema_version=schema_version)
+    return transcript_to_summary(detail)
+
+
+@router.get("/{file_id}/transcript-extraction", response_model=TranscriptExtractionDetail)
+async def get_latest_transcript_extraction(
+    file_id: UUID,
+    svc: TranscriptExtractionService = Depends(get_transcript_extraction_service),
+):
+    record = await svc.get_latest(file_id)
+    if not record:
+        raise NotFoundException(message="No transcript extraction found for this file")
+    return record
+
+
+@router.get("/{file_id}/transcript-extraction.json")
+async def download_transcript_extraction_json(
+    file_id: UUID,
+    svc: FileUploadService = Depends(get_file_upload_service),
+):
+    record = await svc.get_metadata(file_id)
+    if not record:
+        raise NotFoundException(message="File not found")
+    path = svc.resolve_transcript_extraction_json_path(file_id)
+    if not path.is_file():
+        raise NotFoundException(
+            message="No transcript extraction JSON on disk — run POST extract-transcript first",
+        )
+    return FileResponse(
+        path=str(path),
+        media_type="application/json",
+        filename=f"{file_id}-transcript-extraction.json",
+    )
 
 
 @router.get("/{file_id}/cv-extraction.json")

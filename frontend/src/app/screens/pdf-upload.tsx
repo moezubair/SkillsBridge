@@ -267,12 +267,20 @@ export function PdfUploadScreen() {
                 Continue to profile wizard
               </Link>
               {lastFile && (
-                <Link
-                  to={`/jobs?file_id=${encodeURIComponent(lastFile.id)}`}
-                  className="text-blue-600 hover:underline"
-                >
-                  Find a job (TinyFish)
-                </Link>
+                <>
+                  <Link
+                    to={`/jobs?file_id=${encodeURIComponent(lastFile.id)}`}
+                    className="text-blue-600 hover:underline"
+                  >
+                    Find a job (TinyFish)
+                  </Link>
+                  <Link
+                    to={`/harvard?file_id=${encodeURIComponent(lastFile.id)}`}
+                    className="text-blue-600 hover:underline"
+                  >
+                    Harvard majors
+                  </Link>
+                </>
               )}
             </p>
           </CardContent>

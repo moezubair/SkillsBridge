@@ -13,6 +13,7 @@ from app.core.postgres_client import PostgresClient
 from app.core.redis_client import RedisClient
 from app.core.cv_extraction.db_schema import ensure_cv_extractions_table
 from app.core.jobs.db_schema import ensure_job_tables
+from app.core.school.db_schema import ensure_school_tables
 from app.core.landingai.ade_client import AdeClient
 from app.core.upload.schema import ensure_uploaded_files_table
 
@@ -44,6 +45,9 @@ async def lifespan(app: FastAPI):
 
     await ensure_job_tables(postgres_client.pool)
     logger.info("Job discovery schema ready")
+
+    await ensure_school_tables(postgres_client.pool)
+    logger.info("School / transcript schema ready")
 
     ade_client = AdeClient()
     app.state.ade_client = ade_client

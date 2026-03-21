@@ -10,6 +10,7 @@ from app.core.upload.disk_storage import LocalDiskFileStorage
 from app.core.upload.payloads import IncomingPdfPayload
 from app.core.upload.pdf_validator import PdfUploadValidator
 from app.models.cv_extraction import CvExtractionDetail
+from app.models.transcript_extraction import TranscriptExtractionDetail
 from app.models.file import StoredFile, StoredFileCreate
 from app.repositories.file_repository import FileRepository
 
@@ -78,6 +79,16 @@ class FileUploadService:
         (same disk tree as PDFs) for backups, Postman workflows, and local tooling.
         """
         storage_key = f"extract/{detail.file_id}.json"
+        payload = json.dumps(
+            detail.model_dump(mode="json"),
+            ensure_ascii=False,
+            indent=2,
+        ).encode("utf-8")
+        await self._storage.write(storage_key, payload)
+        return storage_key
+
+    async def save_transcript_extraction_json(self, detail: TranscriptExtractionDetail) -> str:
+        storage_key = f"extract-transcript/{detail.file_id}.json"
         payload = json.dumps(
             detail.model_dump(mode="json"),
             ensure_ascii=False,
