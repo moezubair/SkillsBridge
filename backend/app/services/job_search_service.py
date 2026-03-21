@@ -7,7 +7,12 @@ from uuid import UUID
 from app.config.settings import Settings, TINYFISH_JOB_SEARCH_URL_DEFAULT
 from app.core.debug_session_log import debug_ndjson
 from app.core.exceptions import BadGatewayException, NotFoundException
-from app.core.jobs.match_heuristic import build_goal_from_context, compute_match
+from app.core.jobs.learning_plan import generate_learning_plan
+from app.core.jobs.match_heuristic import (
+    build_goal_from_context,
+    compact_cv_profile_for_goal,
+    compute_match,
+)
 from app.core.jobs.normalize import normalize_one_job
 from app.core.tinyfish.client import TinyFishError, run_with_settings
 from app.models.job import JobSearchResponse
@@ -32,7 +37,13 @@ class JobSearchService:
         self._prefs_repo = prefs_repo
         self._discovery = discovery
 
-    async def run_search(self, file_id: UUID) -> JobSearchResponse:
+    async def run_search(
+        self,
+        file_id: UUID,
+        *,
+        target_role: str | None = None,
+        include_learning_plan: bool = True,
+    ) -> JobSearchResponse:
         meta = await self._files.get_by_id(file_id)
         if not meta:
             raise NotFoundException(message="File not found")
@@ -43,18 +54,32 @@ class JobSearchService:
         cv = await self._cv_repo.get_latest_for_file(file_id)
         extraction: dict = cv.extraction if cv and isinstance(cv.extraction, dict) else {}
 
+        tr = (target_role or "").strip() or None
+        snapshot: dict = dict(prefs)
+        if tr:
+            snapshot["target_role"] = tr
+        snapshot["include_learning_plan"] = include_learning_plan
+
+        prefs_for_match = dict(prefs)
+        if tr:
+            prefs_for_match["target_role"] = tr
+
         # Hardcoded MVP default (CareerBuilder); env may override to another allowlisted URL.
         search_url = (self._settings.TINYFISH_JOB_SEARCH_URL or "").strip() or TINYFISH_JOB_SEARCH_URL_DEFAULT
 
         run = await self._discovery.create_run(
             file_id=file_id,
             status="running",
-            preferences_snapshot=prefs or None,
+            preferences_snapshot=snapshot or None,
         )
         run_id = run.id
 
         try:
-            goal = build_goal_from_context(preferences=prefs, extraction=extraction)
+            goal = build_goal_from_context(
+                preferences=prefs,
+                extraction=extraction,
+                target_role=tr,
+            )
             # #region agent log
             debug_ndjson(
                 hypothesis_id="H1-H3",
@@ -90,11 +115,26 @@ class JobSearchService:
                     message="Could not parse a job from the agent response",
                 )
 
+            gap_analysis = normalized.get("gap_analysis") or {}
+            learning_plan_dict = None
+            if include_learning_plan:
+                profile = compact_cv_profile_for_goal(extraction)
+                plan = await generate_learning_plan(
+                    self._settings,
+                    target_role=tr,
+                    job_title=normalized["title"],
+                    job_snippet=normalized.get("description_snippet"),
+                    gap_analysis=gap_analysis if isinstance(gap_analysis, dict) else {},
+                    cv_profile=profile,
+                )
+                if plan is not None:
+                    learning_plan_dict = plan.model_dump()
+
             score, reasons = compute_match(
                 job_title=normalized["title"],
                 job_location=normalized.get("location"),
                 job_snippet=normalized.get("description_snippet"),
-                preferences=prefs,
+                preferences=prefs_for_match,
                 extraction=extraction,
             )
 
@@ -114,6 +154,8 @@ class JobSearchService:
                 raw_agent_payload=normalized.get("raw_agent_payload"),
                 match_score=score,
                 match_reasons=reasons,
+                gap_analysis=gap_analysis if isinstance(gap_analysis, dict) else None,
+                learning_plan=learning_plan_dict,
             )
 
             await self._discovery.finalize_run(

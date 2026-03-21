@@ -42,6 +42,8 @@ class JobListingOut(BaseModel):
     salary_text: str | None = None
     match_score: int | None = None
     match_reasons: list[str] | None = None
+    gap_analysis: dict[str, Any] | None = None
+    learning_plan: dict[str, Any] | None = None
     fetched_at: datetime
 
 
@@ -64,6 +66,14 @@ class JobSearchRequest(BaseModel):
     """Run TinyFish once for this CV file (uses saved preferences + latest extraction)."""
 
     job_file_id: UUID
+    target_role: str | None = Field(
+        default=None,
+        description="Primary role for this search run (free text); overrides emphasis vs saved desired_titles.",
+    )
+    include_learning_plan: bool = Field(
+        default=True,
+        description="If true and OPENAI_API_KEY is set, generate a JSON learning plan from gap analysis.",
+    )
 
 
 class LatestJobResponse(BaseModel):

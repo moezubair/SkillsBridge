@@ -109,6 +109,8 @@ class JobDiscoveryRepository(BaseRepository):
         raw_agent_payload: dict[str, Any] | None,
         match_score: int | None,
         match_reasons: list[str] | None,
+        gap_analysis: dict[str, Any] | None = None,
+        learning_plan: dict[str, Any] | None = None,
     ) -> JobListingOut:
         listing_id = uuid4()
         raw_json = (
@@ -121,6 +123,12 @@ class JobDiscoveryRepository(BaseRepository):
             if match_reasons is not None
             else None
         )
+        gap_json = (
+            json.dumps(gap_analysis, ensure_ascii=False) if gap_analysis is not None else None
+        )
+        plan_json = (
+            json.dumps(learning_plan, ensure_ascii=False) if learning_plan is not None else None
+        )
         async with self.pool.acquire() as conn:
             row = await conn.fetchrow(
                 """
@@ -128,15 +136,18 @@ class JobDiscoveryRepository(BaseRepository):
                     id, search_run_id, source_site, source_url, title, company,
                     location, employment_type, remote_policy, posted_at,
                     description_snippet, full_description, salary_text,
-                    raw_agent_payload, match_score, match_reasons
+                    raw_agent_payload, match_score, match_reasons,
+                    gap_analysis, learning_plan
                 )
                 VALUES (
                     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-                    $11, $12, $13, $14::jsonb, $15, $16::jsonb
+                    $11, $12, $13, $14::jsonb, $15, $16::jsonb,
+                    $17::jsonb, $18::jsonb
                 )
                 RETURNING id, search_run_id, source_site, source_url, title, company,
                     location, employment_type, remote_policy, posted_at,
-                    description_snippet, salary_text, match_score, match_reasons, fetched_at
+                    description_snippet, salary_text, match_score, match_reasons,
+                    gap_analysis, learning_plan, fetched_at
                 """,
                 listing_id,
                 search_run_id,
@@ -154,6 +165,8 @@ class JobDiscoveryRepository(BaseRepository):
                 raw_json,
                 match_score,
                 reasons_json,
+                gap_json,
+                plan_json,
             )
         return _listing_row_to_out(row)
 
@@ -164,7 +177,8 @@ class JobDiscoveryRepository(BaseRepository):
                 SELECT
                     l.id, l.search_run_id, l.source_site, l.source_url, l.title, l.company,
                     l.location, l.employment_type, l.remote_policy, l.posted_at,
-                    l.description_snippet, l.salary_text, l.match_score, l.match_reasons, l.fetched_at,
+                    l.description_snippet, l.salary_text, l.match_score, l.match_reasons,
+                    l.gap_analysis, l.learning_plan, l.fetched_at,
                     r.id AS run_id, r.file_id, r.status, r.started_at, r.finished_at,
                     r.error_message, r.tinyfish_run_id
                 FROM job_listings l
@@ -192,6 +206,8 @@ class JobDiscoveryRepository(BaseRepository):
             salary_text=row["salary_text"],
             match_score=row["match_score"],
             match_reasons=_coerce_str_list(row["match_reasons"]),
+            gap_analysis=_coerce_json_object(row["gap_analysis"]),
+            learning_plan=_coerce_json_object(row["learning_plan"]),
             fetched_at=row["fetched_at"],
         )
         run = JobSearchRunOut(
@@ -204,6 +220,20 @@ class JobDiscoveryRepository(BaseRepository):
             tinyfish_run_id=row["tinyfish_run_id"],
         )
         return listing, run
+
+
+def _coerce_json_object(value: Any) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError:
+            return None
+        return parsed if isinstance(parsed, dict) else None
+    return None
 
 
 def _coerce_str_list(value: Any) -> list[str] | None:
@@ -246,5 +276,7 @@ def _listing_row_to_out(row: asyncpg.Record) -> JobListingOut:
         salary_text=row["salary_text"],
         match_score=row["match_score"],
         match_reasons=_coerce_str_list(row["match_reasons"]),
+        gap_analysis=_coerce_json_object(row["gap_analysis"]),
+        learning_plan=_coerce_json_object(row["learning_plan"]),
         fetched_at=row["fetched_at"],
     )

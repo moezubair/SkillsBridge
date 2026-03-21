@@ -70,3 +70,15 @@ async def ensure_job_tables(pool: asyncpg.Pool) -> None:
                 ON job_listings (search_run_id);
             """
         )
+        await conn.execute(
+            """
+            ALTER TABLE job_listings
+                ADD COLUMN IF NOT EXISTS gap_analysis JSONB;
+            """
+        )
+        await conn.execute(
+            """
+            ALTER TABLE job_listings
+                ADD COLUMN IF NOT EXISTS learning_plan JSONB;
+            """
+        )

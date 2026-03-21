@@ -49,6 +49,23 @@ def source_site_from_url(url: str) -> str:
         return "unknown"
 
 
+def _gap_dict_list(raw: Any) -> list[dict[str, Any]]:
+    if not isinstance(raw, list):
+        return []
+    out: list[dict[str, Any]] = []
+    for item in raw:
+        if isinstance(item, dict):
+            out.append(dict(item))
+    return out
+
+
+def extract_gap_analysis(picked: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "missing_or_weak_vs_job": _gap_dict_list(picked.get("missing_or_weak_vs_job")),
+        "improvements_to_close_gaps": _gap_dict_list(picked.get("improvements_to_close_gaps")),
+    }
+
+
 def normalize_one_job(result: dict[str, Any]) -> dict[str, Any] | None:
     """
     Return a normalized dict with keys used by JobDiscoveryRepository.insert_listing
@@ -71,6 +88,8 @@ def normalize_one_job(result: dict[str, Any]) -> dict[str, Any] | None:
     remote_policy = _as_str(picked.get("remote_policy"))
     salary_text = _as_str(picked.get("salary") or picked.get("salary_text"))
 
+    gap_analysis = extract_gap_analysis(picked)
+
     return {
         "source_site": source_site_from_url(url),
         "source_url": url,
@@ -83,5 +102,6 @@ def normalize_one_job(result: dict[str, Any]) -> dict[str, Any] | None:
         "description_snippet": snippet,
         "full_description": _as_str(picked.get("full_description")),
         "salary_text": salary_text,
+        "gap_analysis": gap_analysis,
         "raw_agent_payload": picked,
     }

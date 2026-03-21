@@ -50,3 +50,26 @@ def test_normalize_rejects_missing_url():
 
 def test_source_site_from_url():
     assert source_site_from_url("https://www.indeed.com/viewjob") == "indeed.com"
+
+
+def test_normalize_includes_gap_analysis():
+    result = {
+        "title": "Engineer",
+        "url": "https://example.com/jobs/1",
+        "missing_or_weak_vs_job": [
+            {"requirement": "5y Python", "candidate_signal": "2y"},
+        ],
+        "improvements_to_close_gaps": [
+            {
+                "related_requirement": "5y Python",
+                "what_to_build_or_learn": "Ship two production services",
+                "suggested_evidence": "GitHub + blog",
+            }
+        ],
+    }
+    out = normalize_one_job(result)
+    assert out is not None
+    ga = out["gap_analysis"]
+    assert len(ga["missing_or_weak_vs_job"]) == 1
+    assert ga["missing_or_weak_vs_job"][0]["requirement"] == "5y Python"
+    assert len(ga["improvements_to_close_gaps"]) == 1
