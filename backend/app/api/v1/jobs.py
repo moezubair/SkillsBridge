@@ -18,7 +18,11 @@ async def post_job_search(
     svc: JobSearchService = Depends(get_job_search_service),
 ):
     """Run TinyFish once, persist one job listing, return it with run metadata."""
-    return await svc.run_search(body.job_file_id)
+    return await svc.run_search(
+        body.job_file_id,
+        target_role=body.target_role,
+        include_learning_plan=body.include_learning_plan,
+    )
 
 
 @router.get("/latest", response_model=LatestJobResponse)

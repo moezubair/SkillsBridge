@@ -46,8 +46,9 @@ class Settings(BaseSettings):
     TINYFISH_JOB_SEARCH_URL: str = TINYFISH_JOB_SEARCH_URL_DEFAULT
     TINYFISH_SSE_TIMEOUT_SECONDS: float = 180.0
 
-    # OpenAI for program assessment
+    # OpenAI for program assessment and job learning plans
     OPENAI_API_KEY: str = ""
+    OPENAI_JOB_LEARNING_MODEL: str = "gpt-4o-mini"
 
     # Harvard major catalog (TinyFish enriches seed from this public page; respect ToS/robots)
     HARVARD_CATALOG_URL: str = "https://college.harvard.edu/advising/fields-study"

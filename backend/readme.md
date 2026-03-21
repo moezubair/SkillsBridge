@@ -152,7 +152,15 @@ Both flows stay **separate** (different uploads, repos, and file ids). They shar
 
 | Flow | URL setting | Goal built from | Primary outcome |
 |------|-------------|-----------------|-----------------|
-| Job search | `TINYFISH_JOB_SEARCH_URL` | CV extraction + job preferences (DB) | Structured job listing JSON → normalized |
+| Job search | `TINYFISH_JOB_SEARCH_URL` | CV extraction + job preferences (DB) + optional per-request `target_role`; goal asks for gap arrays vs profile | Structured job listing JSON + `missing_or_weak_vs_job` / `improvements_to_close_gaps` → normalized; optional OpenAI learning plan JSON |
+
+**Job search** `POST /api/v1/jobs/search` body:
+
+- `job_file_id` (required).
+- `target_role` (optional) — free-text primary role for this run only (also stored on `preferences_snapshot` for the run).
+- `include_learning_plan` (optional, default `true`) — if `OPENAI_API_KEY` is set, after TinyFish the API calls OpenAI with `response_format: json_object` to build a staged roadmap (`stages` with timeline, activities, resources, reason, difficulty, impact). If the key is missing or the call fails, the listing is still returned with `learning_plan: null`.
+
+**Limitation:** On many job boards the agent only sees **snippets** on the listing page, not the full job description — gap analysis may be incomplete until a detail-page step is added.
 | Harvard match | `HARVARD_CATALOG_URL` | Latest transcript extraction + optional IELTS/skills from **student_extras** row | Ranked majors JSON → `HarvardMatchResponse` |
 
 **Harvard** `POST /api/v1/school-matches/harvard` body (IDs only):
@@ -212,6 +220,8 @@ See `.env.example` for all options.
 | `LANDINGAI_BASE_URL` | `https://api.va.landing.ai` | ADE API host        |
 | `LANDINGAI_PARSE_MODEL` | `dpt-2-latest` | PDF → markdown model   |
 | `LANDINGAI_EXTRACT_MODEL` | `extract-latest` | Schema extract model |
+| `OPENAI_API_KEY` | (empty) | Optional; job learning plan + school assessments |
+| `OPENAI_JOB_LEARNING_MODEL` | `gpt-4o-mini` | Chat model for job learning-plan JSON |
 
 ## Testing
 
