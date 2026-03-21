@@ -1,24 +1,37 @@
-"""Harvard major matching: one TinyFish run with transcript-driven goal (mirrors job search pattern)."""
+"""Program requirement gathering: TinyFish web scraping + transcript lookup."""
 
 from __future__ import annotations
 
+import json
 import logging
+from pathlib import Path
 from typing import Optional
 from uuid import UUID
 
 from app.config.settings import Settings
 from app.core.exceptions import NotFoundException
-from app.core.harvard.catalog import load_seed_majors, merge_seed_and_agent
-from app.core.harvard.match import match_student_to_majors
-from app.core.harvard.match_goal import build_harvard_match_goal
-from app.core.harvard.match_parse import enrich_detail_urls_from_seed, parse_harvard_ranked_matches
+from app.core.harvard.catalog import load_seed_majors
+from app.core.harvard.match_goal import build_program_requirements_goal
+from app.core.harvard.match_parse import parse_program_requirements
 from app.core.tinyfish.client import TinyFishError, run_with_settings
-from app.models.school_match import HarvardMatchResponse
+from app.models.school_match import HarvardMatchResponse, UniversityProgramOut
 from app.repositories.school_file_repository import SchoolFileRepository
 from app.repositories.student_extras_repository import StudentExtrasRepository
 from app.repositories.transcript_extraction_repository import TranscriptExtractionRepository
 
 logger = logging.getLogger(__name__)
+
+# Load universities config
+_UNIVERSITIES_PATH = Path(__file__).resolve().parents[2] / "data" / "universities.json"
+
+
+def _load_universities() -> list[dict]:
+    """Load university configurations from universities.json."""
+    if not _UNIVERSITIES_PATH.exists():
+        logger.warning("universities.json not found, returning empty list")
+        return []
+    with open(_UNIVERSITIES_PATH) as f:
+        return json.load(f)
 
 
 class SchoolMatchService:
@@ -71,40 +84,43 @@ class SchoolMatchService:
 
         extraction = tr.extraction if isinstance(tr.extraction, dict) else {}
         seed = load_seed_majors()
-        majors_for_heuristic = merge_seed_and_agent(seed, [])
         names = [str(m["name"]) for m in seed if m.get("name")]
 
-        goal = build_harvard_match_goal(
+        # Load Harvard config from universities.json
+        universities = _load_universities()
+        harvard_config = next((u for u in universities if u.get("name") == "Harvard"), None)
+        if not harvard_config:
+            logger.error("Harvard configuration not found in universities.json")
+            return HarvardMatchResponse(
+                school="Harvard",
+                catalog_source="heuristic_fallback",
+                programs=[],
+            )
+
+        catalog_url = harvard_config.get("catalog_url", "").strip()
+        if not catalog_url:
+            logger.warning("Harvard catalog_url not configured")
+            return HarvardMatchResponse(
+                school="Harvard",
+                catalog_source="heuristic_fallback",
+                programs=[],
+            )
+
+        goal = build_program_requirements_goal(
             extraction=extraction,
             ielts=ielts,
             skills=skills,
-            major_names_for_context=names,
+            program_names_for_context=names,
+            university_name="Harvard",
         )
-
-        url = (self._settings.HARVARD_CATALOG_URL or "").strip()
-        if not url:
-            matches = match_student_to_majors(
-                extraction=extraction,
-                ielts=ielts,
-                skills=skills,
-                majors=majors_for_heuristic,
-            )
-            return HarvardMatchResponse(
-                catalog_source="heuristic_no_catalog_url",
-                matches=matches,
-            )
 
         key = (self._settings.TINYFISH_API_KEY or "").strip()
         if not key:
-            matches = match_student_to_majors(
-                extraction=extraction,
-                ielts=ielts,
-                skills=skills,
-                majors=majors_for_heuristic,
-            )
+            logger.warning("TINYFISH_API_KEY not configured")
             return HarvardMatchResponse(
-                catalog_source="heuristic_no_tinyfish",
-                matches=matches,
+                school="Harvard",
+                catalog_source="heuristic_fallback",
+                programs=[],
             )
 
         timeout = float(
@@ -113,29 +129,27 @@ class SchoolMatchService:
         )
         try:
             result, _tf = await run_with_settings(
-                url=url,
+                url=catalog_url,
                 goal=goal,
                 settings=self._settings,
                 timeout_seconds=timeout,
             )
-            parsed = parse_harvard_ranked_matches(result)
-            enrich_detail_urls_from_seed(parsed, seed)
+            parsed = parse_program_requirements(result)
             if parsed:
+                programs = [
+                    UniversityProgramOut(**p) for p in parsed
+                ]
                 return HarvardMatchResponse(
-                    catalog_source="tinyfish_ranked",
-                    matches=parsed,
+                    school="Harvard",
+                    catalog_source="tinyfish_gathered",
+                    programs=programs,
                 )
-            logger.warning("Harvard TinyFish returned no parseable matches; using heuristic fallback")
+            logger.warning("Harvard TinyFish returned no parseable programs")
         except TinyFishError as exc:
-            logger.warning("Harvard TinyFish match run failed: %s", exc)
+            logger.warning("Harvard TinyFish run failed: %s", exc)
 
-        matches = match_student_to_majors(
-            extraction=extraction,
-            ielts=ielts,
-            skills=skills,
-            majors=majors_for_heuristic,
-        )
         return HarvardMatchResponse(
+            school="Harvard",
             catalog_source="heuristic_fallback",
-            matches=matches,
+            programs=[],
         )

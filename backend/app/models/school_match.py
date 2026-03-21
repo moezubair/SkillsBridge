@@ -1,4 +1,4 @@
-"""API models for Harvard (and future school) major matching."""
+"""API models for university program requirement gathering."""
 
 from typing import Optional
 from uuid import UUID
@@ -26,10 +26,13 @@ class HarvardMatchRequest(BaseModel):
         return self
 
 
-class HarvardMajorMatchOut(BaseModel):
-    major: str
-    score: int
-    reasons: list[str]
+class UniversityProgramOut(BaseModel):
+    name: str
+    required_courses: list[str]
+    required_gpa: Optional[str] = None
+    required_tests: list[str]
+    extracurriculars: list[str]
+    other_requirements: list[str]
     detail_url: Optional[str] = None
 
 
@@ -37,9 +40,7 @@ class HarvardMatchResponse(BaseModel):
     school: str = "Harvard"
     catalog_source: str = Field(
         ...,
-        description=(
-            "tinyfish_ranked | heuristic_fallback | heuristic_no_tinyfish | "
-            "heuristic_no_catalog_url"
-        ),
+        description="tinyfish_gathered | heuristic_fallback | tinyfish_failed",
     )
-    matches: list[HarvardMajorMatchOut]
+    programs: list[UniversityProgramOut]
+
