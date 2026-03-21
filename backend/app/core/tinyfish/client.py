@@ -278,6 +278,7 @@ async def run_with_settings(
     url: str,
     goal: str,
     settings: Settings | None = None,
+    timeout_seconds: float | None = None,
 ) -> tuple[dict[str, Any], str | None]:
     cfg = settings or get_settings()
     key = (cfg.TINYFISH_API_KEY or "").strip()
@@ -299,10 +300,15 @@ async def run_with_settings(
         data={"key_len": len(key)},
     )
     # #endregion
+    timeout = float(
+        timeout_seconds
+        if timeout_seconds is not None
+        else cfg.TINYFISH_SSE_TIMEOUT_SECONDS
+    )
     return await run_automation_sse(
         url=url,
         goal=goal,
         api_key=key,
-        timeout_seconds=float(cfg.TINYFISH_SSE_TIMEOUT_SECONDS),
+        timeout_seconds=timeout,
         base_url=(cfg.TINYFISH_BASE_URL or "").strip() or None,
     )

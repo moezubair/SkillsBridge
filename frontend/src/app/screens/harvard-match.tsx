@@ -59,8 +59,8 @@ function parseOptionalFloat(s: string): number | undefined {
 
 export function HarvardMatchScreen() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const fileIdParam = searchParams.get("file_id") ?? "";
-  const [fileId, setFileId] = useState(fileIdParam);
+  const schoolFileIdParam = searchParams.get("school_file_id") ?? "";
+  const [schoolFileId, setSchoolFileId] = useState(schoolFileIdParam);
   const skillsId = useId();
   const overallId = useId();
   const listenId = useId();
@@ -81,6 +81,8 @@ export function HarvardMatchScreen() {
 
   const [loadingExtras, setLoadingExtras] = useState(false);
   const [savingExtras, setSavingExtras] = useState(false);
+  /** Row id from student-extras API; sent as ielts_id on match (IELTS/skills are not inlined). */
+  const [savedExtrasId, setSavedExtrasId] = useState<string | null>(null);
   const [matching, setMatching] = useState(false);
   const [matchResult, setMatchResult] = useState<HarvardMatchResponse | null>(
     null,
@@ -89,16 +91,16 @@ export function HarvardMatchScreen() {
   const syncUrl = useCallback(
     (id: string) => {
       const next = new URLSearchParams(searchParams);
-      if (id.trim()) next.set("file_id", id.trim());
-      else next.delete("file_id");
+      if (id.trim()) next.set("school_file_id", id.trim());
+      else next.delete("school_file_id");
       setSearchParams(next, { replace: true });
     },
     [searchParams, setSearchParams],
   );
 
   useEffect(() => {
-    setFileId(fileIdParam);
-  }, [fileIdParam]);
+    setSchoolFileId(schoolFileIdParam);
+  }, [schoolFileIdParam]);
 
   const buildIeltsBody = useCallback(() => {
     const overall = parseOptionalFloat(ieltsOverall);
@@ -122,20 +124,21 @@ export function HarvardMatchScreen() {
   ]);
 
   const loadExtras = useCallback(async () => {
-    const id = fileId.trim();
+    const id = schoolFileId.trim();
     if (!id) {
-      toast.error("Enter a file id (from Upload PDF).");
+      toast.error("Enter a school file id (from Transcript upload).");
       return;
     }
     syncUrl(id);
     setLoadingExtras(true);
     try {
       const res = await fetch(
-        `/api/v1/student-extras?file_id=${encodeURIComponent(id)}`,
+        `/api/v1/student-extras?school_file_id=${encodeURIComponent(id)}`,
       );
       const payload = await res.json().catch(() => null);
       if (!res.ok) {
         if (res.status === 404) {
+          setSavedExtrasId(null);
           setSkillsText("");
           setIeltsOverall("");
           setIeltsListening("");
@@ -150,6 +153,9 @@ export function HarvardMatchScreen() {
             ? payload.detail
             : "Failed to load student extras",
         );
+      }
+      if (typeof payload.id === "string") {
+        setSavedExtrasId(payload.id);
       }
       const skills = Array.isArray(payload.skills)
         ? (payload.skills as string[]).join(", ")
@@ -179,12 +185,12 @@ export function HarvardMatchScreen() {
     } finally {
       setLoadingExtras(false);
     }
-  }, [fileId, syncUrl]);
+  }, [schoolFileId, syncUrl]);
 
   async function extractTranscript() {
-    const id = fileId.trim();
+    const id = schoolFileId.trim();
     if (!id) {
-      toast.error("Enter a file id first.");
+      toast.error("Enter a school file id first.");
       return;
     }
     syncUrl(id);
@@ -192,7 +198,7 @@ export function HarvardMatchScreen() {
     setTranscript(null);
     try {
       const res = await fetch(
-        `/api/v1/files/${encodeURIComponent(id)}/extract-transcript`,
+        `/api/v1/school/files/${encodeURIComponent(id)}/extract-transcript`,
         { method: "POST" },
       );
       const payload = await res.json().catch(() => null);
@@ -213,9 +219,9 @@ export function HarvardMatchScreen() {
   }
 
   async function saveExtras() {
-    const id = fileId.trim();
+    const id = schoolFileId.trim();
     if (!id) {
-      toast.error("Enter a file id first.");
+      toast.error("Enter a school file id first.");
       return;
     }
     syncUrl(id);
@@ -224,7 +230,7 @@ export function HarvardMatchScreen() {
       const ielts = buildIeltsBody();
       const skills = splitList(skillsText);
       const res = await fetch(
-        `/api/v1/student-extras?file_id=${encodeURIComponent(id)}`,
+        `/api/v1/student-extras?school_file_id=${encodeURIComponent(id)}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -239,6 +245,9 @@ export function HarvardMatchScreen() {
             : "Save failed",
         );
       }
+      if (typeof payload?.id === "string") {
+        setSavedExtrasId(payload.id);
+      }
       toast.success("Saved IELTS and skills.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Save failed");
@@ -248,20 +257,20 @@ export function HarvardMatchScreen() {
   }
 
   async function runMatch() {
-    const id = fileId.trim();
-    if (!id) {
-      toast.error("Enter a file id first.");
+    const id = schoolFileId.trim();
+    if (!id && !savedExtrasId) {
+      toast.error("Enter a school file id or save/load student extras first.");
       return;
     }
-    syncUrl(id);
+    if (id) syncUrl(id);
     setMatching(true);
     setMatchResult(null);
     try {
-      const ielts = buildIeltsBody();
-      const skills = splitList(skillsText);
-      const body: Record<string, unknown> = { file_id: id };
-      if (ielts) body.ielts = ielts;
-      if (skills.length) body.skills = skills;
+      const body: Record<string, unknown> = {};
+      if (id) body.school_file_id = id;
+      if (savedExtrasId) {
+        body.ielts_id = savedExtrasId;
+      }
       const res = await fetch("/api/v1/school-matches/harvard", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -307,22 +316,24 @@ export function HarvardMatchScreen() {
               Transcript + IELTS + skills
             </CardTitle>
             <CardDescription>
-              Use the same <strong>file id</strong> from{" "}
-              <Link to="/upload" className="text-blue-600 hover:underline">
-                Upload PDF
+              Use a <strong>school file id</strong> from{" "}
+              <Link to="/upload/school" className="text-blue-600 hover:underline">
+                Transcript upload
               </Link>
-              . Extract a transcript, optionally save IELTS and skills, then run
-              the matcher (TinyFish may refresh the catalog when cache expires).
+              . Extract a transcript, optionally save IELTS and skills (the match
+              request only sends that row&apos;s id — save before matching to
+              include them). Matching runs one TinyFish pass on the Harvard URL,
+              then falls back to a local heuristic if needed.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="file-id">Uploaded file id</Label>
+              <Label htmlFor="school-file-id">School upload id</Label>
               <Input
-                id="file-id"
-                value={fileId}
-                onChange={(e) => setFileId(e.target.value)}
-                placeholder="uuid from upload response"
+                id="school-file-id"
+                value={schoolFileId}
+                onChange={(e) => setSchoolFileId(e.target.value)}
+                placeholder="uuid from POST /api/v1/school/files/upload"
                 className="font-mono text-sm"
               />
             </div>
@@ -463,6 +474,12 @@ export function HarvardMatchScreen() {
                 placeholder="Python, research writing, debate…"
               />
             </div>
+
+            {savedExtrasId && (
+              <p className="text-xs text-gray-500 font-mono">
+                Linked extras id: {savedExtrasId}
+              </p>
+            )}
 
             <div className="flex flex-wrap gap-2">
               <Button

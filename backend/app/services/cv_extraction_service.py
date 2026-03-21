@@ -8,7 +8,7 @@ from app.config.settings import Settings
 from app.core.cv_extraction import SCHEMA_VERSION_CV_V1, load_cv_schema
 from app.core.exceptions import AppException, BadRequestException
 from app.core.landingai.ade_client import AdeClient, AdeExtractResult, LandingAiApiError
-from app.core.upload import FileUploadService
+from app.core.upload import ScopedFileUploadService
 from app.models.cv_extraction import CvExtractionDetail
 from app.repositories.cv_extraction_repository import CvExtractionRepository
 
@@ -18,7 +18,7 @@ class CvExtractionService:
 
     def __init__(
         self,
-        files: FileUploadService,
+        files: ScopedFileUploadService,
         ade: AdeClient,
         repository: CvExtractionRepository,
         settings: Settings,
@@ -38,7 +38,15 @@ class CvExtractionService:
             schema = load_cv_schema(schema_version)
         except ValueError as exc:
             raise BadRequestException(message=str(exc)) from exc
-        pdf_bytes, record = await self._files.read_stored_pdf(file_id)
+        pdf_bytes, record = await self._files.read_stored_pdf(
+            file_id,
+            not_found_message=(
+                "No job (CV) upload with this id. "
+                "Upload a PDF with POST /api/v1/job/files/upload (multipart field `file`), "
+                "then call extract-cv with the returned `id`."
+            ),
+            missing_bytes_message="CV PDF bytes missing on disk for this job upload id.",
+        )
         try:
             parsed = await self._ade.parse_pdf(pdf_bytes, record.original_filename)
             extracted = await self._ade.extract(parsed.markdown, schema)

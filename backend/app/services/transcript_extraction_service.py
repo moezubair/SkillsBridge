@@ -8,7 +8,7 @@ from app.config.settings import Settings
 from app.core.cv_extraction import SCHEMA_VERSION_TRANSCRIPT_V1, load_transcript_schema
 from app.core.exceptions import AppException, BadRequestException
 from app.core.landingai.ade_client import AdeClient, AdeExtractResult, LandingAiApiError
-from app.core.upload import FileUploadService
+from app.core.upload import ScopedFileUploadService
 from app.models.transcript_extraction import TranscriptExtractionDetail
 from app.repositories.transcript_extraction_repository import TranscriptExtractionRepository
 
@@ -16,7 +16,7 @@ from app.repositories.transcript_extraction_repository import TranscriptExtracti
 class TranscriptExtractionService:
     def __init__(
         self,
-        files: FileUploadService,
+        files: ScopedFileUploadService,
         ade: AdeClient,
         repository: TranscriptExtractionRepository,
         settings: Settings,
@@ -40,7 +40,17 @@ class TranscriptExtractionService:
             schema = load_transcript_schema(schema_version)
         except ValueError as exc:
             raise BadRequestException(message=str(exc)) from exc
-        pdf_bytes, record = await self._files.read_stored_pdf(file_id)
+        pdf_bytes, record = await self._files.read_stored_pdf(
+            file_id,
+            not_found_message=(
+                "No school transcript upload with this id. "
+                "Upload a PDF with POST /api/v1/school/files/upload (multipart field `file`), "
+                "then call extract-transcript with the returned `id`."
+            ),
+            missing_bytes_message=(
+                "Transcript PDF bytes missing on disk for this school upload id."
+            ),
+        )
         try:
             parsed = await self._ade.parse_pdf(pdf_bytes, record.original_filename)
             extracted = await self._ade.extract(parsed.markdown, schema)

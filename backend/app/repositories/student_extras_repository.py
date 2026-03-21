@@ -53,6 +53,18 @@ class StudentExtrasRepository(BaseRepository):
             )
         return _row_to_record(row) if row else None
 
+    async def get_by_id(self, extras_id: UUID) -> StudentExtrasRecord | None:
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT id, file_id, ielts, skills, updated_at
+                FROM student_extras
+                WHERE id = $1
+                """,
+                extras_id,
+            )
+        return _row_to_record(row) if row else None
+
 
 def _coerce_json(value: Any) -> Any:
     if value is None:
@@ -72,7 +84,7 @@ def _row_to_record(row: asyncpg.Record) -> StudentExtrasRecord:
         skills = [str(x) for x in skills_raw]
     return StudentExtrasRecord(
         id=row["id"],
-        file_id=row["file_id"],
+        school_file_id=row["file_id"],
         ielts=ielts if isinstance(ielts, dict) else None,
         skills=skills,
         updated_at=row["updated_at"],

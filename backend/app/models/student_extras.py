@@ -22,7 +22,7 @@ class StudentExtrasBody(BaseModel):
 
 class StudentExtrasRecord(BaseModel):
     id: UUID
-    file_id: UUID
+    school_file_id: UUID
     ielts: dict[str, Any] | None = None
     skills: list[str] = Field(default_factory=list)
     updated_at: datetime

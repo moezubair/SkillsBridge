@@ -9,7 +9,7 @@ async def ensure_school_tables(pool: asyncpg.Pool) -> None:
             """
             CREATE TABLE IF NOT EXISTS transcript_extractions (
                 id UUID PRIMARY KEY,
-                file_id UUID NOT NULL REFERENCES uploaded_files(id) ON DELETE CASCADE,
+                file_id UUID NOT NULL REFERENCES school_uploaded_files(id) ON DELETE CASCADE,
                 schema_version TEXT NOT NULL,
                 status TEXT NOT NULL,
                 extraction JSONB NOT NULL,
@@ -30,7 +30,7 @@ async def ensure_school_tables(pool: asyncpg.Pool) -> None:
             """
             CREATE TABLE IF NOT EXISTS student_extras (
                 id UUID PRIMARY KEY,
-                file_id UUID NOT NULL UNIQUE REFERENCES uploaded_files(id) ON DELETE CASCADE,
+                file_id UUID NOT NULL UNIQUE REFERENCES school_uploaded_files(id) ON DELETE CASCADE,
                 ielts JSONB,
                 skills JSONB,
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

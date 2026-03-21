@@ -15,11 +15,11 @@ async def post_harvard_major_match(
     svc: SchoolMatchService = Depends(get_school_match_service),
 ):
     """
-    Rank Harvard majors using latest transcript extraction, saved student_extras,
-    and optional body overrides for IELTS/skills. Refreshes catalog via TinyFish when cache expires.
+    Rank Harvard majors: one TinyFish run on HARVARD_CATALOG_URL with a goal built from the
+    latest transcript extraction; optional ielts_id loads IELTS/skills from student_extras and
+    can imply school_file_id when omitted. Falls back to a local heuristic if TinyFish fails.
     """
     return await svc.match_harvard(
-        body.file_id,
-        ielts_override=body.ielts,
-        skills_override=body.skills,
+        body.school_file_id,
+        ielts_id=body.ielts_id,
     )

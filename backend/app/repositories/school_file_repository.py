@@ -1,4 +1,4 @@
-"""Persistence for uploaded file metadata (Postgres)."""
+"""Persistence for school (transcript) uploaded file metadata."""
 
 from uuid import UUID
 
@@ -10,17 +10,12 @@ from app.models.file import StoredFile, StoredFileCreate
 from app.repositories.base_repository import BaseRepository
 
 
-class FileRepository(BaseRepository):
-    """Maps StoredFile rows to/from the uploaded_files table."""
-
-    def __init__(self, settings: Settings, postgres: PostgresClient) -> None:
-        super().__init__(settings, postgres)
-
+class SchoolFileRepository(BaseRepository):
     async def insert(self, data: StoredFileCreate) -> StoredFile:
         async with self.pool.acquire() as conn:
             row = await conn.fetchrow(
                 """
-                INSERT INTO uploaded_files
+                INSERT INTO school_uploaded_files
                     (id, original_filename, storage_key, mime_type, size_bytes)
                 VALUES ($1, $2, $3, $4, $5)
                 RETURNING id, original_filename, storage_key, mime_type, size_bytes, created_at
@@ -38,7 +33,7 @@ class FileRepository(BaseRepository):
             row = await conn.fetchrow(
                 """
                 SELECT id, original_filename, storage_key, mime_type, size_bytes, created_at
-                FROM uploaded_files
+                FROM school_uploaded_files
                 WHERE id = $1
                 """,
                 file_id,
