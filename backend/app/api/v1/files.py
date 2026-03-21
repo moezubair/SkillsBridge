@@ -80,6 +80,27 @@ async def get_latest_cv_extraction(
     return record
 
 
+@router.get("/{file_id}/cv-extraction.json")
+async def download_cv_extraction_json(
+    file_id: UUID,
+    svc: FileUploadService = Depends(get_file_upload_service),
+):
+    """Download the same extraction payload written to disk after POST extract-cv (JSON file)."""
+    record = await svc.get_metadata(file_id)
+    if not record:
+        raise NotFoundException(message="File not found")
+    path = svc.resolve_cv_extraction_json_path(file_id)
+    if not path.is_file():
+        raise NotFoundException(
+            message="No extraction JSON on disk — run POST extract-cv for this file first",
+        )
+    return FileResponse(
+        path=str(path),
+        media_type="application/json",
+        filename=f"{file_id}-cv-extraction.json",
+    )
+
+
 @router.get("/{file_id}", response_model=StoredFile)
 async def get_file_metadata(
     file_id: UUID,

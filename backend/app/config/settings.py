@@ -5,6 +5,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # Always load .env next to the backend package (not relative to process cwd).
 _BACKEND_DIR = Path(__file__).resolve().parents[2]
 
+# MVP default TinyFish entry URL (override with TINYFISH_JOB_SEARCH_URL). Respect site ToS.
+TINYFISH_JOB_SEARCH_URL_DEFAULT = "https://www.careerbuilder.com/"
+
 
 class Settings(BaseSettings):
     APP_NAME: str = "FastAPI Service"
@@ -27,7 +30,7 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
 
-    # PDF uploads: metadata in Postgres, bytes under UPLOAD_ROOT (relative to process cwd, usually backend/)
+    # PDF uploads: metadata in Postgres; relative UPLOAD_ROOT is under the backend/ folder (not process cwd).
     UPLOAD_ROOT: str = "storage/uploads"
     MAX_PDF_UPLOAD_BYTES: int = 20 * 1024 * 1024
 
@@ -36,6 +39,12 @@ class Settings(BaseSettings):
     LANDINGAI_BASE_URL: str = "https://api.va.landing.ai"
     LANDINGAI_PARSE_MODEL: str = "dpt-2-latest"
     LANDINGAI_EXTRACT_MODEL: str = "extract-latest"
+
+    # TinyFish web agent — one URL + goal per MVP search (https://docs.tinyfish.ai/quick-start)
+    TINYFISH_API_KEY: str = ""
+    TINYFISH_BASE_URL: str = ""
+    TINYFISH_JOB_SEARCH_URL: str = TINYFISH_JOB_SEARCH_URL_DEFAULT
+    TINYFISH_SSE_TIMEOUT_SECONDS: float = 180.0
 
     @property
     def postgres_dsn(self) -> str:
