@@ -18,3 +18,8 @@ class BadRequestException(AppException):
 class UnauthorizedException(AppException):
     def __init__(self, message: str = "Unauthorized") -> None:
         super().__init__(message=message, status_code=401)
+
+
+class BadGatewayException(AppException):
+    def __init__(self, message: str = "Bad gateway") -> None:
+        super().__init__(message=message, status_code=502)

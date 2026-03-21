@@ -37,6 +37,12 @@ export function NavBar({ showBack, title }: NavBarProps) {
               Upload PDF
             </Link>
             <Link
+              to="/jobs"
+              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Jobs
+            </Link>
+            <Link
               to="/study-plan"
               className="hidden sm:block text-sm text-gray-600 hover:text-gray-900 transition-colors"
             >

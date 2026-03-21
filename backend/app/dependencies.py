@@ -7,7 +7,10 @@ from app.core.redis_client import RedisClient
 from app.core.upload import FileUploadService, LocalDiskFileStorage, PdfUploadValidator
 from app.repositories.cv_extraction_repository import CvExtractionRepository
 from app.repositories.file_repository import FileRepository
+from app.repositories.job_discovery_repository import JobDiscoveryRepository
+from app.repositories.job_preferences_repository import JobPreferencesRepository
 from app.services.cv_extraction_service import CvExtractionService
+from app.services.job_search_service import JobSearchService
 
 
 def get_redis(request: Request) -> RedisClient:
@@ -44,4 +47,30 @@ def get_cv_extraction_service(request: Request) -> CvExtractionService:
         get_ade_client(request),
         get_cv_extraction_repository(request),
         settings,
+    )
+
+
+def get_file_repository(request: Request) -> FileRepository:
+    settings = get_settings()
+    return FileRepository(settings, get_postgres(request))
+
+
+def get_job_preferences_repository(request: Request) -> JobPreferencesRepository:
+    settings = get_settings()
+    return JobPreferencesRepository(settings, get_postgres(request))
+
+
+def get_job_discovery_repository(request: Request) -> JobDiscoveryRepository:
+    settings = get_settings()
+    return JobDiscoveryRepository(settings, get_postgres(request))
+
+
+def get_job_search_service(request: Request) -> JobSearchService:
+    settings = get_settings()
+    return JobSearchService(
+        settings,
+        get_file_repository(request),
+        get_cv_extraction_repository(request),
+        get_job_preferences_repository(request),
+        get_job_discovery_repository(request),
     )

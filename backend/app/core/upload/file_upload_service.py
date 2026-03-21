@@ -1,6 +1,7 @@
 """Orchestrates validation → disk → database for PDF uploads."""
 
 import asyncio
+import json
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -8,6 +9,7 @@ from app.core.exceptions import NotFoundException
 from app.core.upload.disk_storage import LocalDiskFileStorage
 from app.core.upload.payloads import IncomingPdfPayload
 from app.core.upload.pdf_validator import PdfUploadValidator
+from app.models.cv_extraction import CvExtractionDetail
 from app.models.file import StoredFile, StoredFileCreate
 from app.repositories.file_repository import FileRepository
 
@@ -51,6 +53,10 @@ class FileUploadService:
         """Path on disk for streaming a download (delegates to storage root + key)."""
         return self._storage.full_path(record.storage_key)
 
+    def resolve_cv_extraction_json_path(self, file_id: UUID) -> Path:
+        """Path to persisted extraction JSON (after POST extract-cv)."""
+        return self._storage.full_path(f"extract/{file_id}.json")
+
     async def read_stored_pdf(self, file_id: UUID) -> tuple[bytes, StoredFile]:
         """Load bytes for a previously uploaded PDF (e.g. CV parsing pipeline)."""
         record = await self.get_metadata(file_id)
@@ -65,3 +71,17 @@ class FileUploadService:
 
         data = await asyncio.to_thread(_read)
         return data, record
+
+    async def save_cv_extraction_json(self, detail: CvExtractionDetail) -> str:
+        """
+        Persist the extraction result as JSON under UPLOAD_ROOT/extract/{file_id}.json
+        (same disk tree as PDFs) for backups, Postman workflows, and local tooling.
+        """
+        storage_key = f"extract/{detail.file_id}.json"
+        payload = json.dumps(
+            detail.model_dump(mode="json"),
+            ensure_ascii=False,
+            indent=2,
+        ).encode("utf-8")
+        await self._storage.write(storage_key, payload)
+        return storage_key

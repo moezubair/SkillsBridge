@@ -31,7 +31,14 @@ class LocalDiskFileStorage:
         await asyncio.to_thread(_write)
 
 
+def _backend_root() -> Path:
+    """Directory containing the `app` package (same anchor as settings loading `.env`)."""
+    return Path(__file__).resolve().parents[3]
+
+
 def _resolve_upload_root(config_value: str) -> Path:
     raw = Path(config_value)
-    root = raw if raw.is_absolute() else Path.cwd() / raw
-    return root.resolve()
+    if raw.is_absolute():
+        return raw.resolve()
+    # Relative paths are stable regardless of process cwd (e.g. uvicorn from repo root).
+    return (_backend_root() / raw).resolve()

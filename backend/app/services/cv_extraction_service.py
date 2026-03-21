@@ -52,7 +52,7 @@ class CvExtractionService:
 
         status = _derive_status(parsed.http_status, extracted)
         try:
-            return await self._repository.insert(
+            detail = await self._repository.insert(
                 file_id=file_id,
                 schema_version=schema_version,
                 status=status,
@@ -66,6 +66,16 @@ class CvExtractionService:
                 message=f"Failed to save extraction: {exc}",
                 status_code=500,
             ) from exc
+
+        try:
+            await self._files.save_cv_extraction_json(detail)
+        except Exception as exc:
+            raise AppException(
+                message=f"Extraction saved to database but failed to write JSON file: {exc}",
+                status_code=500,
+            ) from exc
+
+        return detail
 
     async def get_latest(self, file_id: UUID) -> CvExtractionDetail | None:
         return await self._repository.get_latest_for_file(file_id)

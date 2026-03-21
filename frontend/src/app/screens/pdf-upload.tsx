@@ -262,10 +262,18 @@ export function PdfUploadScreen() {
               </div>
             )}
 
-            <p className="mt-6 text-center text-sm text-gray-500">
+            <p className="mt-6 text-center text-sm text-gray-500 space-x-3">
               <Link to="/wizard" className="text-blue-600 hover:underline">
                 Continue to profile wizard
               </Link>
+              {lastFile && (
+                <Link
+                  to={`/jobs?file_id=${encodeURIComponent(lastFile.id)}`}
+                  className="text-blue-600 hover:underline"
+                >
+                  Find a job (TinyFish)
+                </Link>
+              )}
             </p>
           </CardContent>
         </Card>
