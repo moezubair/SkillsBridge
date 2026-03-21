@@ -14,8 +14,7 @@ import {
 } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 
-/** Mirrors backend `StoredFile` JSON (Pydantic → OpenAPI). */
-export type StoredFileRecord = {
+export type SchoolStoredFileRecord = {
   id: string;
   original_filename: string;
   storage_key: string;
@@ -24,8 +23,7 @@ export type StoredFileRecord = {
   created_at: string;
 };
 
-/** Mirrors backend `CvExtractionRecord` after POST extract-cv. */
-export type CvExtractionRecord = {
+type TranscriptExtractionRecord = {
   id: string;
   file_id: string;
   schema_version: string;
@@ -34,25 +32,21 @@ export type CvExtractionRecord = {
   created_at: string;
 };
 
-function asStringArray(v: unknown): string[] {
-  return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
-}
-
-export function PdfUploadScreen() {
+export function SchoolPdfUploadScreen() {
   const inputId = useId();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [extracting, setExtracting] = useState(false);
-  const [lastFile, setLastFile] = useState<StoredFileRecord | null>(null);
-  const [cvExtraction, setCvExtraction] = useState<CvExtractionRecord | null>(null);
+  const [lastFile, setLastFile] = useState<SchoolStoredFileRecord | null>(null);
+  const [transcript, setTranscript] = useState<TranscriptExtractionRecord | null>(null);
   const [pickedName, setPickedName] = useState<string | null>(null);
 
-  async function extractCv(fileId: string) {
+  async function extractTranscript(schoolFileId: string) {
     setExtracting(true);
-    setCvExtraction(null);
+    setTranscript(null);
     try {
       const res = await fetch(
-        `/api/v1/job/files/${fileId}/extract-cv`,
+        `/api/v1/school/files/${schoolFileId}/extract-transcript`,
         { method: "POST" },
       );
       const payload = await res.json().catch(() => null);
@@ -60,13 +54,13 @@ export function PdfUploadScreen() {
         const msg =
           typeof payload?.detail === "string"
             ? payload.detail
-            : "CV extraction failed";
+            : "Transcript extraction failed";
         throw new Error(msg);
       }
-      setCvExtraction(payload as CvExtractionRecord);
-      toast.success("CV parsed with LandingAI.");
+      setTranscript(payload as TranscriptExtractionRecord);
+      toast.success("Transcript extracted.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "CV extraction failed");
+      toast.error(err instanceof Error ? err.message : "Extraction failed");
     } finally {
       setExtracting(false);
     }
@@ -81,11 +75,11 @@ export function PdfUploadScreen() {
       return;
     }
     setBusy(true);
-    setCvExtraction(null);
+    setTranscript(null);
     try {
       const body = new FormData();
       body.append("file", file);
-      const res = await fetch("/api/v1/job/files/upload", {
+      const res = await fetch("/api/v1/school/files/upload", {
         method: "POST",
         body,
       });
@@ -97,12 +91,12 @@ export function PdfUploadScreen() {
             : "Upload failed";
         throw new Error(msg);
       }
-      const stored = payload as StoredFileRecord;
+      const stored = payload as SchoolStoredFileRecord;
       setLastFile(stored);
-      toast.success("PDF uploaded and saved.");
+      toast.success("Transcript PDF saved (school pipeline).");
       if (input) input.value = "";
       setPickedName(null);
-      await extractCv(stored.id);
+      await extractTranscript(stored.id);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -110,34 +104,33 @@ export function PdfUploadScreen() {
     }
   }
 
-  const ex = cvExtraction?.extraction;
-  const technical = ex ? asStringArray(ex.technical_skills) : [];
-  const soft = ex ? asStringArray(ex.soft_skills) : [];
-  const langs = ex ? asStringArray(ex.languages) : [];
-  const summary =
-    ex && typeof ex.professional_summary === "string"
-      ? ex.professional_summary
-      : null;
-  const fullName = ex && typeof ex.full_name === "string" ? ex.full_name : null;
-  const years =
-    ex && typeof ex.years_of_experience === "number"
-      ? ex.years_of_experience
-      : null;
+  const ex = transcript?.extraction;
+  const gpa =
+    ex && typeof ex.gpa === "number"
+      ? ex.gpa
+      : ex && typeof ex.gpa === "string"
+        ? Number(ex.gpa)
+        : null;
+  const schoolName =
+    ex && typeof ex.school_name === "string" ? ex.school_name : null;
+  const courses = ex?.courses;
+  const courseCount = Array.isArray(courses) ? courses.length : 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <NavBar showBack title="Upload CV" />
+      <NavBar showBack title="Upload transcript" />
       <main className="max-w-2xl mx-auto px-4 py-10">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
-              <Upload className="h-5 w-5 text-blue-600" />
-              Upload CV (PDF)
+              <Upload className="h-5 w-5 text-rose-600" />
+              Upload transcript (PDF)
             </CardTitle>
             <CardDescription>
-              Stored in the <strong>job</strong> pipeline only (<code className="text-xs">job_uploaded_files</code>
-              , disk <code className="text-xs">jobs/…</code>). Only <strong>.pdf</strong> files. After upload we
-              run <strong>LandingAI</strong> parse + CV schema extract.
+              Stored in the <strong>school</strong> pipeline only (
+              <code className="text-xs">school_uploaded_files</code>, disk{" "}
+              <code className="text-xs">school/…</code>). Use this for Harvard matching — separate
+              from the CV/job upload.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -150,7 +143,7 @@ export function PdfUploadScreen() {
                   name="file"
                   type="file"
                   accept="application/pdf,.pdf"
-                  className="block w-full text-sm text-gray-600 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-100"
+                  className="block w-full text-sm text-gray-600 file:mr-4 file:rounded-md file:border-0 file:bg-rose-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-rose-800 hover:file:bg-rose-100"
                   onChange={() => {
                     const f = fileInputRef.current?.files?.[0];
                     setPickedName(f?.name ?? null);
@@ -167,24 +160,20 @@ export function PdfUploadScreen() {
                 {busy
                   ? "Uploading…"
                   : extracting
-                    ? "Extracting CV…"
-                    : "Upload & extract CV"}
+                    ? "Extracting transcript…"
+                    : "Upload & extract transcript"}
               </Button>
             </form>
 
             {lastFile && (
               <div className="mt-8 rounded-lg border border-gray-200 bg-white p-4 space-y-3">
-                <p className="text-sm font-medium text-gray-900">Last upload</p>
+                <p className="text-sm font-medium text-gray-900">Last school upload</p>
                 <dl className="text-sm text-gray-600 space-y-1">
                   <div className="flex justify-between gap-4">
                     <dt className="text-gray-500">Name</dt>
                     <dd className="truncate max-w-[14rem] text-right">
                       {lastFile.original_filename}
                     </dd>
-                  </div>
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-gray-500">Size</dt>
-                    <dd>{(lastFile.size_bytes / 1024).toFixed(1)} KB</dd>
                   </div>
                   <div className="flex justify-between gap-4">
                     <dt className="text-gray-500">Id</dt>
@@ -195,7 +184,7 @@ export function PdfUploadScreen() {
                 </dl>
                 <Button variant="outline" className="w-full" asChild>
                   <a
-                    href={`/api/v1/job/files/${lastFile.id}/download`}
+                    href={`/api/v1/school/files/${lastFile.id}/download`}
                     download={lastFile.original_filename}
                   >
                     <Download className="h-4 w-4 mr-2" />
@@ -205,78 +194,46 @@ export function PdfUploadScreen() {
               </div>
             )}
 
-            {cvExtraction && ex && (
-              <div className="mt-8 rounded-lg border border-blue-100 bg-blue-50/50 p-4 space-y-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-                  <Sparkles className="h-4 w-4 text-blue-600" />
-                  Extracted profile
+            {transcript && ex && (
+              <div className="mt-8 rounded-lg border border-rose-100 bg-rose-50/40 p-4 space-y-2 text-sm">
+                <div className="flex items-center gap-2 font-semibold text-gray-900">
+                  <Sparkles className="h-4 w-4 text-rose-600" />
+                  Transcript snapshot
                   <Badge variant="secondary" className="ml-auto capitalize">
-                    {cvExtraction.status}
+                    {transcript.status}
                   </Badge>
                 </div>
-                {fullName && (
-                  <p className="text-base font-medium text-gray-900">{fullName}</p>
-                )}
-                {years != null && (
-                  <p className="text-sm text-gray-600">
-                    ~{years} years experience (as stated on CV)
+                {schoolName && (
+                  <p>
+                    <span className="text-gray-500">School: </span>
+                    {schoolName}
                   </p>
                 )}
-                {summary && (
-                  <p className="text-sm text-gray-700 leading-relaxed">{summary}</p>
-                )}
-                {technical.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                      Technical skills
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {technical.slice(0, 24).map((s) => (
-                        <Badge key={s} variant="outline" className="font-normal">
-                          {s}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {soft.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                      Soft skills
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {soft.slice(0, 16).map((s) => (
-                        <Badge key={s} variant="secondary" className="font-normal">
-                          {s}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {langs.length > 0 && (
-                  <p className="text-sm text-gray-600">
-                    <span className="font-medium">Languages: </span>
-                    {langs.join(", ")}
+                {gpa != null && !Number.isNaN(gpa) && (
+                  <p>
+                    <span className="text-gray-500">GPA: </span>
+                    {gpa}
                   </p>
                 )}
+                <p>
+                  <span className="text-gray-500">Courses parsed: </span>
+                  {courseCount}
+                </p>
               </div>
             )}
 
             <p className="mt-6 text-center text-sm text-gray-500 space-x-3">
-              <Link to="/wizard" className="text-blue-600 hover:underline">
-                Continue to profile wizard
+              <Link to="/upload" className="text-blue-600 hover:underline">
+                Upload CV (job flow)
               </Link>
               {lastFile && (
                 <Link
-                  to={`/jobs?job_file_id=${encodeURIComponent(lastFile.id)}`}
+                  to={`/harvard?school_file_id=${encodeURIComponent(lastFile.id)}`}
                   className="text-blue-600 hover:underline"
                 >
-                  Find a job (TinyFish)
+                  Harvard majors
                 </Link>
               )}
-              <Link to="/upload/school" className="text-blue-600 hover:underline">
-                Upload transcript (school flow)
-              </Link>
             </p>
           </CardContent>
         </Card>

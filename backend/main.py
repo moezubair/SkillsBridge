@@ -13,8 +13,14 @@ from app.core.postgres_client import PostgresClient
 from app.core.redis_client import RedisClient
 from app.core.cv_extraction.db_schema import ensure_cv_extractions_table
 from app.core.jobs.db_schema import ensure_job_tables
+from app.core.school.db_schema import ensure_school_tables
 from app.core.landingai.ade_client import AdeClient
-from app.core.upload.schema import ensure_uploaded_files_table
+from app.core.upload.schema import (
+    ensure_job_uploaded_files_table,
+    ensure_scoped_upload_fk_migration,
+    ensure_school_uploaded_files_table,
+    ensure_uploaded_files_table,
+)
 
 
 @asynccontextmanager
@@ -37,13 +43,21 @@ async def lifespan(app: FastAPI):
     logger.info("PostgreSQL connected")
 
     await ensure_uploaded_files_table(postgres_client.pool)
-    logger.info("Upload schema ready")
+    await ensure_job_uploaded_files_table(postgres_client.pool)
+    await ensure_school_uploaded_files_table(postgres_client.pool)
+    logger.info("Upload schema ready (legacy + job + school)")
 
     await ensure_cv_extractions_table(postgres_client.pool)
     logger.info("CV extraction schema ready")
 
     await ensure_job_tables(postgres_client.pool)
     logger.info("Job discovery schema ready")
+
+    await ensure_school_tables(postgres_client.pool)
+    logger.info("School / transcript schema ready")
+
+    await ensure_scoped_upload_fk_migration(postgres_client.pool)
+    logger.info("Scoped upload FK migration applied")
 
     ade_client = AdeClient()
     app.state.ade_client = ade_client

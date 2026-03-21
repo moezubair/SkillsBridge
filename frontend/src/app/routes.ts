@@ -7,6 +7,10 @@ import { Processing } from "./screens/processing";
 import { ResultsDashboard } from "./screens/results-dashboard";
 import { ProgramDetail } from "./screens/program-detail";
 import { StudyPlan } from "./screens/study-plan";
+import { PdfUploadScreen } from "./screens/pdf-upload";
+import { SchoolPdfUploadScreen } from "./screens/school-pdf-upload";
+import { JobMatchScreen } from "./screens/job-match";
+import { HarvardMatchScreen } from "./screens/harvard-match";
 import { Profile } from "./screens/profile";
 import { Portfolio } from "./screens/portfolio";
 import { Settings } from "./screens/settings";
@@ -44,6 +48,22 @@ export const router = createBrowserRouter([
   {
     path: "/study-plan",
     Component: StudyPlan,
+  },
+  {
+    path: "/upload",
+    Component: PdfUploadScreen,
+  },
+  {
+    path: "/upload/school",
+    Component: SchoolPdfUploadScreen,
+  },
+  {
+    path: "/jobs",
+    Component: JobMatchScreen,
+  },
+  {
+    path: "/harvard",
+    Component: HarvardMatchScreen,
   },
   {
     path: "/profile",

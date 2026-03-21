@@ -18,15 +18,15 @@ async def post_job_search(
     svc: JobSearchService = Depends(get_job_search_service),
 ):
     """Run TinyFish once, persist one job listing, return it with run metadata."""
-    return await svc.run_search(body.file_id)
+    return await svc.run_search(body.job_file_id)
 
 
 @router.get("/latest", response_model=LatestJobResponse)
 async def get_latest_job(
-    file_id: UUID = Query(..., description="Uploaded PDF / CV file id"),
+    job_file_id: UUID = Query(..., description="Job upload id from POST /api/v1/job/files/upload"),
     repo: JobDiscoveryRepository = Depends(get_job_discovery_repository),
 ):
-    pair = await repo.get_latest_listing_for_file(file_id)
+    pair = await repo.get_latest_listing_for_file(job_file_id)
     if not pair:
         return LatestJobResponse(job=None, run=None)
     job, run = pair

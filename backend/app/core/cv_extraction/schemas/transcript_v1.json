@@ -1,0 +1,43 @@
+{
+  "type": "object",
+  "properties": {
+    "student_name": {
+      "type": "string",
+      "description": "Student name on transcript if visible."
+    },
+    "school_name": {
+      "type": "string",
+      "description": "Issuing school or institution name."
+    },
+    "graduation_year": {
+      "type": "string",
+      "description": "Expected or actual graduation year as written."
+    },
+    "gpa": {
+      "type": "number",
+      "description": "Overall GPA if stated; null if not found."
+    },
+    "gpa_scale": {
+      "type": "string",
+      "description": "Scale e.g. 4.0, 5.0, 100, percentage."
+    },
+    "class_rank": {
+      "type": "string",
+      "description": "Class rank or percentile if stated."
+    },
+    "courses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Course title or code." },
+          "grade": { "type": "string", "description": "Letter or numeric grade." },
+          "level": { "type": "string", "description": "AP, IB, Honors, Regular if indicated." }
+        },
+        "required": ["name"]
+      },
+      "description": "Courses listed on the transcript."
+    }
+  },
+  "required": ["courses"]
+}

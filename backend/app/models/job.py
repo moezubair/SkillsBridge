@@ -22,7 +22,7 @@ class JobPreferencesBody(BaseModel):
 
 class JobPreferencesRecord(BaseModel):
     id: UUID
-    file_id: UUID
+    job_file_id: UUID
     preferences: dict[str, Any]
     updated_at: datetime
 
@@ -47,7 +47,7 @@ class JobListingOut(BaseModel):
 
 class JobSearchRunOut(BaseModel):
     id: UUID
-    file_id: UUID
+    job_file_id: UUID
     status: str
     started_at: datetime
     finished_at: datetime | None = None
@@ -63,7 +63,7 @@ class JobSearchResponse(BaseModel):
 class JobSearchRequest(BaseModel):
     """Run TinyFish once for this CV file (uses saved preferences + latest extraction)."""
 
-    file_id: UUID
+    job_file_id: UUID
 
 
 class LatestJobResponse(BaseModel):

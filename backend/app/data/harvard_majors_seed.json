@@ -1,0 +1,54 @@
+{
+  "majors": [
+    {
+      "name": "Computer Science",
+      "keywords": ["computer", "programming", "software", "algorithms", "math", "cs"],
+      "detail_url": "https://seas.harvard.edu/programs/computer-science"
+    },
+    {
+      "name": "Applied Mathematics",
+      "keywords": ["mathematics", "statistics", "modeling", "calculus", "linear algebra"],
+      "detail_url": "https://seas.harvard.edu/programs/applied-mathematics"
+    },
+    {
+      "name": "Electrical Engineering",
+      "keywords": ["circuits", "electronics", "signals", "physics", "engineering"],
+      "detail_url": "https://seas.harvard.edu/programs/electrical-engineering"
+    },
+    {
+      "name": "Economics",
+      "keywords": ["economics", "microeconomics", "macroeconomics", "finance", "policy"],
+      "detail_url": "https://economics.harvard.edu/"
+    },
+    {
+      "name": "Government",
+      "keywords": ["politics", "policy", "law", "international relations", "public service"],
+      "detail_url": "https://gov.harvard.edu/"
+    },
+    {
+      "name": "Psychology",
+      "keywords": ["psychology", "cognitive", "behavior", "neuroscience", "research"],
+      "detail_url": "https://psychology.fas.harvard.edu/"
+    },
+    {
+      "name": "English",
+      "keywords": ["literature", "writing", "humanities", "english"],
+      "detail_url": "https://english.fas.harvard.edu/"
+    },
+    {
+      "name": "Molecular and Cellular Biology",
+      "keywords": ["biology", "chemistry", "lab", "mcb", "pre-med", "genetics"],
+      "detail_url": "https://mcb.harvard.edu/"
+    },
+    {
+      "name": "Statistics",
+      "keywords": ["statistics", "data", "probability", "inference"],
+      "detail_url": "https://statistics.fas.harvard.edu/"
+    },
+    {
+      "name": "Mechanical Engineering",
+      "keywords": ["mechanical", "design", "robotics", "thermodynamics", "physics"],
+      "detail_url": "https://seas.harvard.edu/programs/mechanical-engineering"
+    }
+  ]
+}

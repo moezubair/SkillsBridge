@@ -196,7 +196,7 @@ class JobDiscoveryRepository(BaseRepository):
         )
         run = JobSearchRunOut(
             id=row["run_id"],
-            file_id=row["file_id"],
+            job_file_id=row["file_id"],
             status=row["status"],
             started_at=row["started_at"],
             finished_at=row["finished_at"],
@@ -221,7 +221,7 @@ def _coerce_str_list(value: Any) -> list[str] | None:
 def _run_row_to_out(row: asyncpg.Record) -> JobSearchRunOut:
     return JobSearchRunOut(
         id=row["id"],
-        file_id=row["file_id"],
+        job_file_id=row["file_id"],
         status=row["status"],
         started_at=row["started_at"],
         finished_at=row["finished_at"],
