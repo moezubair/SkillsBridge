@@ -10,6 +10,7 @@ from app.repositories.job_discovery_repository import JobDiscoveryRepository
 from app.repositories.job_file_repository import JobFileRepository
 from app.repositories.job_preferences_repository import JobPreferencesRepository
 from app.repositories.school_file_repository import SchoolFileRepository
+from app.repositories.school_match_repository import SchoolMatchRepository
 from app.repositories.student_extras_repository import StudentExtrasRepository
 from app.repositories.transcript_extraction_repository import TranscriptExtractionRepository
 from app.services.cv_extraction_service import CvExtractionService
@@ -34,6 +35,16 @@ def get_job_file_repository(request: Request) -> JobFileRepository:
 def get_school_file_repository(request: Request) -> SchoolFileRepository:
     settings = get_settings()
     return SchoolFileRepository(settings, get_postgres(request))
+
+
+def get_student_extras_repository(request: Request) -> StudentExtrasRepository:
+    settings = get_settings()
+    return StudentExtrasRepository(settings, get_postgres(request))
+
+
+def get_transcript_extraction_repository(request: Request) -> TranscriptExtractionRepository:
+    settings = get_settings()
+    return TranscriptExtractionRepository(settings, get_postgres(request))
 
 
 def get_job_file_upload_service(request: Request) -> ScopedFileUploadService:
@@ -88,9 +99,9 @@ def get_transcript_extraction_service(request: Request) -> TranscriptExtractionS
     )
 
 
-def get_student_extras_repository(request: Request) -> StudentExtrasRepository:
+def get_school_match_repository(request: Request) -> SchoolMatchRepository:
     settings = get_settings()
-    return StudentExtrasRepository(settings, get_postgres(request))
+    return SchoolMatchRepository(settings, get_postgres(request))
 
 
 def get_school_match_service(request: Request) -> SchoolMatchService:
@@ -100,6 +111,7 @@ def get_school_match_service(request: Request) -> SchoolMatchService:
         get_school_file_repository(request),
         get_transcript_extraction_repository(request),
         get_student_extras_repository(request),
+        get_school_match_repository(request),
     )
 
 
