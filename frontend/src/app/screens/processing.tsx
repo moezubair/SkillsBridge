@@ -13,12 +13,9 @@ const studentStepLabels = [
   "Assessing program fit…",
 ];
 
-const jobSeekerSteps = [
-  "Parsing resume...",
-  "Identifying skills...",
-  "Scanning job listings...",
-  "Matching positions...",
-  "Ranking results...",
+const jobSeekerStepLabels = [
+  "Loading CV profile…",
+  "Searching job listings…",
 ];
 
 export function Processing() {
@@ -27,12 +24,15 @@ export function Processing() {
   const state = location.state as {
     userType?: string;
     schoolFileId?: string;
+    jobFileId?: string;
   } | null;
   const userType = state?.userType;
   const schoolFileId = state?.schoolFileId;
+  const jobFileId = state?.jobFileId;
 
   const isStudent = userType === "student";
-  const labels = isStudent ? studentStepLabels : jobSeekerSteps;
+  const isJobSeeker = userType === "job-seeker";
+  const labels = isStudent ? studentStepLabels : jobSeekerStepLabels;
 
   const [steps, setSteps] = useState<ProcessingStep[]>(
     labels.map((label) => ({ label, status: "pending" }))
@@ -142,37 +142,67 @@ export function Processing() {
     };
   }, [isStudent, schoolFileId, navigate]);
 
-  // Job-seeker flow: keep fake animation for now
+  // Job-seeker flow: real API calls
   useEffect(() => {
-    if (isStudent) return;
+    if (!isJobSeeker || ran.current) return;
+    ran.current = true;
 
-    const timings = [500, 1000, 1500, 2500, 3500];
+    if (!jobFileId) {
+      setErrorMsg("Missing job file ID. Please go back and upload your resume.");
+      return;
+    }
 
-    timings.forEach((timing, index) => {
-      setTimeout(() => {
-        setSteps((prev) => {
-          const newSteps = [...prev];
-          if (index > 0) {
-            newSteps[index - 1].status = "done";
-          }
-          newSteps[index].status = "processing";
-          return newSteps;
+    let cancelled = false;
+
+    async function runJobSeekerPipeline() {
+      try {
+        // Step 0: Loading profile
+        setStepStatus(0, "processing");
+        await new Promise((r) => setTimeout(r, 600));
+        if (cancelled) return;
+        setStepStatus(0, "done", "CV profile loaded");
+
+        // Step 1: Search job listings
+        setStepStatus(1, "processing");
+        const searchRes = await fetch("/api/v1/jobs/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ job_file_id: jobFileId }),
         });
-      }, timing);
-    });
+        const searchData = await searchRes.json().catch(() => null);
+        if (!searchRes.ok) {
+          throw new Error(
+            typeof searchData?.detail === "string"
+              ? searchData.detail
+              : "Job search failed"
+          );
+        }
+        if (cancelled) return;
+        const jobTitle = searchData?.job?.title ?? "a position";
+        setStepStatus(1, "done", `Found match: ${jobTitle}`);
 
-    setTimeout(() => {
-      setSteps((prev) => {
-        const newSteps = [...prev];
-        newSteps[newSteps.length - 1].status = "done";
-        return newSteps;
-      });
-    }, 4500);
+        // Navigate to job match page
+        setTimeout(() => {
+          if (!cancelled) {
+            navigate(`/jobs?job_file_id=${jobFileId}`);
+          }
+        }, 800);
+      } catch (err) {
+        if (!cancelled) {
+          const msg = err instanceof Error ? err.message : "Something went wrong";
+          setErrorMsg(msg);
+          setSteps((prev) =>
+            prev.map((s) => (s.status === "processing" ? { ...s, status: "error" } : s))
+          );
+        }
+      }
+    }
 
-    setTimeout(() => {
-      navigate("/results");
-    }, 5000);
-  }, [isStudent, navigate]);
+    runJobSeekerPipeline();
+    return () => {
+      cancelled = true;
+    };
+  }, [isJobSeeker, jobFileId, navigate]);
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
@@ -242,7 +272,9 @@ export function Processing() {
           </div>
         ) : (
           <p className="text-sm text-gray-500">
-            {isStudent ? "Scraping university catalogs — this can take 2–3 minutes…" : "Usually takes ~10 seconds."}
+            {isStudent
+              ? "Scraping university catalogs — this can take 2–3 minutes…"
+              : "Searching job listings — this can take 1–3 minutes…"}
           </p>
         )}
       </div>

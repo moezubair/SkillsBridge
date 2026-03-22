@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { useLocation } from "react-router";
-import { Search } from "lucide-react";
+import { useLocation, Link } from "react-router";
+import { Search, ArrowRight } from "lucide-react";
 import { NavBar } from "../components/nav-bar";
 import { ProgramCard, type ProgramCardProps } from "../components/program-card";
 
@@ -204,6 +204,18 @@ export function ResultsDashboard() {
                 </div>
               )}
             </div>
+
+            {/* Study Plan Link */}
+            {state?.assessments && (
+              <Link
+                to="/study-plan"
+                state={{ assessments: state.assessments }}
+                className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium"
+              >
+                View my study plan
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            )}
           </>
         )}
       </div>

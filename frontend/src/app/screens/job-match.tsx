@@ -105,6 +105,49 @@ export function JobMatchScreen() {
     setJobFileId(jobFileIdParam);
   }, [jobFileIdParam]);
 
+  // Auto-load preferences and latest job when arriving with a job_file_id
+  const autoLoaded = useState(false);
+  useEffect(() => {
+    if (!jobFileIdParam || autoLoaded[0]) return;
+    autoLoaded[1](true);
+    const id = jobFileIdParam.trim();
+
+    // Load preferences
+    fetch(`/api/v1/job-preferences?job_file_id=${encodeURIComponent(id)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((payload) => {
+        if (!payload) return;
+        const p = (payload.preferences ?? {}) as Record<string, unknown>;
+        const body: JobPreferencesBody = {
+          desired_titles: Array.isArray(p.desired_titles) ? p.desired_titles.filter((x): x is string => typeof x === "string") : [],
+          locations: Array.isArray(p.locations) ? p.locations.filter((x): x is string => typeof x === "string") : [],
+          remote_only: Boolean(p.remote_only),
+          visa_sponsorship: Boolean(p.visa_sponsorship),
+          industries: Array.isArray(p.industries) ? p.industries.filter((x): x is string => typeof x === "string") : [],
+          seniority: typeof p.seniority === "string" ? p.seniority : null,
+          keywords_include: Array.isArray(p.keywords_include) ? p.keywords_include.filter((x): x is string => typeof x === "string") : [],
+          keywords_exclude: Array.isArray(p.keywords_exclude) ? p.keywords_exclude.filter((x): x is string => typeof x === "string") : [],
+        };
+        setPrefs(body);
+        setTitlesText(body.desired_titles.join(", "));
+        setLocsText(body.locations.join(", "));
+        setKwText(body.keywords_include.join(", "));
+        setExText(body.keywords_exclude.join(", "));
+        setSeniorityText(body.seniority ?? "");
+      })
+      .catch(() => {});
+
+    // Load latest job result
+    fetch(`/api/v1/jobs/latest?job_file_id=${encodeURIComponent(id)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((payload) => {
+        if (!payload) return;
+        if (payload.job) setJob(payload.job as JobListingOut);
+        if (payload.run) setLastRun(payload.run as JobSearchRunOut);
+      })
+      .catch(() => {});
+  }, [jobFileIdParam]);
+
   const loadPrefs = useCallback(async () => {
     const id = jobFileId.trim();
     if (!id) {

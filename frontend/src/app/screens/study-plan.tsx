@@ -1,8 +1,7 @@
 import { Download, Share2 } from "lucide-react";
 import { NavBar } from "../components/nav-bar";
-import { PriorityActionCard } from "../components/priority-action-card";
-import { studyPlanGaps } from "../data/mock-data";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useLocation, Link } from "react-router";
 import {
   CheckCircle2,
   Circle,
@@ -18,6 +17,7 @@ import {
   Star,
   Zap,
   BarChart3,
+  AlertCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -33,6 +33,35 @@ import {
   CartesianGrid,
 } from "recharts";
 
+// Types from the assess API
+interface Gap {
+  type: string;
+  requirement: string;
+  current: string;
+  severity: string;
+}
+
+interface Action {
+  action: string;
+  why: string;
+  priority: number;
+  timeline: string;
+  estimated_impact: string;
+  difficulty: string;
+}
+
+interface Assessment {
+  program_id: string;
+  overall_assessment: string;
+  gaps: Gap[];
+  actions: Action[];
+  alternate_paths: string[];
+}
+
+interface LocationState {
+  assessments?: { assessments: Assessment[] };
+}
+
 interface Milestone {
   id: string;
   title: string;
@@ -43,112 +72,182 @@ interface Milestone {
   color: string;
 }
 
-const milestones: Milestone[] = [
-  {
-    id: "1",
-    title: "IELTS Preparation",
-    description: "Intensive English language preparation to achieve band 7.5",
-    timeframe: "Month 1-2",
-    status: "in-progress",
-    color: "blue",
-    tasks: [
-      { id: "1-1", title: "Complete diagnostic test", completed: true },
-      { id: "1-2", title: "Enroll in prep course", completed: true },
-      { id: "1-3", title: "Practice speaking weekly", completed: false },
-      { id: "1-4", title: "Take 3 full mock tests", completed: false },
-      { id: "1-5", title: "Register for official exam", completed: false },
-    ],
-  },
-  {
-    id: "2",
-    title: "Linear Algebra Course",
-    description: "Complete accredited online course with certificate",
-    timeframe: "Month 2-4",
-    status: "upcoming",
-    color: "purple",
-    tasks: [
-      { id: "2-1", title: "Choose course platform", completed: false },
-      { id: "2-2", title: "Complete modules 1-5", completed: false },
-      { id: "2-3", title: "Complete modules 6-10", completed: false },
-      { id: "2-4", title: "Pass final exam", completed: false },
-      { id: "2-5", title: "Receive certificate", completed: false },
-    ],
-  },
-  {
-    id: "3",
-    title: "GRE Examination",
-    description: "Prepare for and complete GRE with target score 320+",
-    timeframe: "Month 3-4",
-    status: "upcoming",
-    color: "green",
-    tasks: [
-      { id: "3-1", title: "Take diagnostic test", completed: false },
-      { id: "3-2", title: "Study verbal reasoning", completed: false },
-      { id: "3-3", title: "Study quantitative reasoning", completed: false },
-      { id: "3-4", title: "Practice analytical writing", completed: false },
-      { id: "3-5", title: "Schedule and take GRE", completed: false },
-    ],
-  },
-  {
-    id: "4",
-    title: "Application Season",
-    description: "Apply to expanded list of programs worldwide",
-    timeframe: "Month 5+",
-    status: "upcoming",
-    color: "amber",
-    tasks: [
-      { id: "4-1", title: "Prepare application documents", completed: false },
-      { id: "4-2", title: "Request recommendation letters", completed: false },
-      { id: "4-3", title: "Write personal statements", completed: false },
-      { id: "4-4", title: "Submit applications", completed: false },
-      { id: "4-5", title: "Prepare for interviews", completed: false },
-    ],
-  },
-];
+interface PriorityGap {
+  priority: number;
+  title: string;
+  current: string;
+  target: string;
+  severity: string;
+  impactCount: number;
+  programs: string[];
+}
 
-const progressData = [
-  { month: "Now", completion: 0, id: "progress-0" },
-  { month: "Month 1", completion: 15, id: "progress-1" },
-  { month: "Month 2", completion: 35, id: "progress-2" },
-  { month: "Month 3", completion: 60, id: "progress-3" },
-  { month: "Month 4", completion: 85, id: "progress-4" },
-  { month: "Month 5", completion: 100, id: "progress-5" },
-];
+const timelineColors: Record<string, string> = {
+  immediate: "blue",
+  "next term": "purple",
+  "next year": "green",
+};
+
+function getColor(timeline: string): string {
+  const lower = timeline.toLowerCase();
+  for (const [key, color] of Object.entries(timelineColors)) {
+    if (lower.includes(key)) return color;
+  }
+  return "amber";
+}
+
+function getStatus(timeline: string): "in-progress" | "upcoming" {
+  return timeline.toLowerCase().includes("immediate") ? "in-progress" : "upcoming";
+}
 
 export function StudyPlan() {
-  const [expandedMilestone, setExpandedMilestone] = useState<string | null>("1");
-  const [completedTasks, setCompletedTasks] = useState<Set<string>>(
-    new Set(["1-1", "1-2"])
-  );
+  const location = useLocation();
+  const state = location.state as LocationState | null;
+  const assessments = state?.assessments?.assessments ?? [];
 
-  const totalGaps = studyPlanGaps.length;
-  const totalMonths = 5;
-  const totalPrograms = studyPlanGaps.reduce(
-    (sum, gap) => sum + gap.impactCount,
-    0
+  // Transform assessments into milestones (group actions by timeline)
+  const { milestones, priorityGaps } = useMemo(() => {
+    // Deduplicate actions by action text, track which programs they appear in
+    const actionMap = new Map<
+      string,
+      { action: Action; programs: Set<string> }
+    >();
+    const gapMap = new Map<
+      string,
+      { gap: Gap; programs: Set<string> }
+    >();
+
+    for (const assessment of assessments) {
+      for (const action of assessment.actions) {
+        const key = action.action.toLowerCase().trim();
+        if (!actionMap.has(key)) {
+          actionMap.set(key, { action, programs: new Set() });
+        }
+        actionMap.get(key)!.programs.add(assessment.program_id);
+      }
+      for (const gap of assessment.gaps) {
+        const key = `${gap.type}:${gap.requirement.toLowerCase().trim()}`;
+        if (!gapMap.has(key)) {
+          gapMap.set(key, { gap, programs: new Set() });
+        }
+        gapMap.get(key)!.programs.add(assessment.program_id);
+      }
+    }
+
+    // Group actions by timeline into milestones
+    const timelineGroups = new Map<string, { action: Action; programs: Set<string> }[]>();
+    for (const entry of actionMap.values()) {
+      const timeline = entry.action.timeline || "next year";
+      if (!timelineGroups.has(timeline)) {
+        timelineGroups.set(timeline, []);
+      }
+      timelineGroups.get(timeline)!.push(entry);
+    }
+
+    // Sort timelines: immediate first, then next term, then next year
+    const timelineOrder = ["immediate", "next term", "next year"];
+    const sortedTimelines = Array.from(timelineGroups.keys()).sort((a, b) => {
+      const aIdx = timelineOrder.findIndex((t) => a.toLowerCase().includes(t));
+      const bIdx = timelineOrder.findIndex((t) => b.toLowerCase().includes(t));
+      return (aIdx === -1 ? 99 : aIdx) - (bIdx === -1 ? 99 : bIdx);
+    });
+
+    const milestones: Milestone[] = sortedTimelines.map((timeline, idx) => {
+      const entries = timelineGroups.get(timeline)!;
+      entries.sort((a, b) => a.action.priority - b.action.priority);
+      return {
+        id: String(idx + 1),
+        title: timeline.charAt(0).toUpperCase() + timeline.slice(1),
+        description: `${entries.length} action${entries.length !== 1 ? "s" : ""} across ${new Set(entries.flatMap((e) => [...e.programs])).size} programs`,
+        timeframe: timeline,
+        status: idx === 0 ? "in-progress" : "upcoming",
+        color: getColor(timeline),
+        tasks: entries.map((e, i) => ({
+          id: `${idx + 1}-${i + 1}`,
+          title: e.action.action,
+          completed: false,
+        })),
+      };
+    });
+
+    // Build priority gaps sorted by impact (number of programs affected)
+    const priorityGaps: PriorityGap[] = Array.from(gapMap.values())
+      .sort((a, b) => b.programs.size - a.programs.size)
+      .slice(0, 10)
+      .map((entry, idx) => ({
+        priority: idx + 1,
+        title: entry.gap.requirement,
+        current: entry.gap.current,
+        target: entry.gap.requirement,
+        severity: entry.gap.severity,
+        impactCount: entry.programs.size,
+        programs: Array.from(entry.programs),
+      }));
+
+    return { milestones, priorityGaps };
+  }, [assessments]);
+
+  const [expandedMilestone, setExpandedMilestone] = useState<string | null>(
+    milestones.length > 0 ? milestones[0].id : null
   );
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+  const [expandedGap, setExpandedGap] = useState<string | null>(null);
 
   const allTasks = milestones.flatMap((m) => m.tasks);
-  const completedCount = Array.from(completedTasks).length;
+  const completedCount = completedTasks.size;
   const totalTasks = allTasks.length;
-  const overallProgress = Math.round((completedCount / totalTasks) * 100);
+  const overallProgress =
+    totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
 
   const toggleTask = (taskId: string) => {
-    const newCompleted = new Set(completedTasks);
-    if (newCompleted.has(taskId)) {
-      newCompleted.delete(taskId);
-    } else {
-      newCompleted.add(taskId);
-    }
-    setCompletedTasks(newCompleted);
+    const next = new Set(completedTasks);
+    if (next.has(taskId)) next.delete(taskId);
+    else next.add(taskId);
+    setCompletedTasks(next);
   };
 
   const pieData = [
     { name: "Completed", value: completedCount },
-    { name: "Remaining", value: totalTasks - completedCount },
+    { name: "Remaining", value: Math.max(totalTasks - completedCount, 0) },
   ];
-
   const COLORS = ["#D4A84C", "#e5e7eb"];
+
+  const totalPrograms = assessments.length;
+  const totalMonths = milestones.length > 0 ? milestones.length * 2 : 0;
+
+  // Generate progress forecast data
+  const progressData = milestones.length > 0
+    ? [
+        { month: "Now", completion: 0 },
+        ...milestones.map((m, i) => ({
+          month: m.title,
+          completion: Math.round(((i + 1) / milestones.length) * 100),
+        })),
+      ]
+    : [];
+
+  if (assessments.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <NavBar />
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+          <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            No assessment data
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Complete the school wizard to get your program assessments and generate a study plan.
+          </p>
+          <Link
+            to="/school-wizard"
+            className="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors"
+          >
+            Go to School Wizard
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -167,9 +266,9 @@ export function StudyPlan() {
                 Your Study Plan
               </h1>
               <p className="text-xl text-gray-700">
-                Complete these milestones to unlock{" "}
+                Complete these milestones to improve your chances for{" "}
                 <span className="font-bold text-[#D4A84C]">
-                  {totalPrograms} more programs
+                  {totalPrograms} programs
                 </span>
               </p>
             </div>
@@ -211,11 +310,14 @@ export function StudyPlan() {
               className="bg-white rounded-2xl border-2 border-[#9B1B30]/10 p-6 shadow-sm hover:shadow-md transition-shadow hover:border-[#9B1B30]/30"
             >
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Overall Progress</p>
+                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                  Overall Progress
+                </p>
                 <Target className="w-5 h-5 text-[#9B1B30]" />
               </div>
               <p className="text-5xl font-extrabold text-[#9B1B30] mb-2">
-                {overallProgress}<span className="text-2xl text-[#D4A84C]">%</span>
+                {overallProgress}
+                <span className="text-2xl text-[#D4A84C]">%</span>
               </p>
               <div className="w-full bg-gray-200 rounded-full h-2.5">
                 <motion.div
@@ -234,13 +336,17 @@ export function StudyPlan() {
               className="bg-white rounded-2xl border-2 border-[#9B1B30]/10 p-6 shadow-sm hover:shadow-md transition-shadow hover:border-[#9B1B30]/30"
             >
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Time Investment</p>
+                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                  Milestones
+                </p>
                 <Clock className="w-5 h-5 text-[#9B1B30]" />
               </div>
               <p className="text-5xl font-extrabold text-[#9B1B30]">
-                {totalMonths}
+                {milestones.length}
               </p>
-              <p className="text-sm text-gray-600 mt-1 font-medium uppercase tracking-wide">Months • ~15-20 hrs/week</p>
+              <p className="text-sm text-gray-600 mt-1 font-medium uppercase tracking-wide">
+                Phases to complete
+              </p>
             </motion.div>
 
             <motion.div
@@ -250,11 +356,17 @@ export function StudyPlan() {
               className="bg-white rounded-2xl border-2 border-[#D4A84C]/20 p-6 shadow-sm hover:shadow-md transition-shadow hover:border-[#D4A84C]/50"
             >
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Programs Unlocked</p>
+                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                  Programs Assessed
+                </p>
                 <TrendingUp className="w-5 h-5 text-[#D4A84C]" />
               </div>
-              <p className="text-5xl font-extrabold text-[#D4A84C]">{totalPrograms}</p>
-              <p className="text-sm text-gray-600 mt-1 font-medium uppercase tracking-wide">Including 3 top-10 ranked</p>
+              <p className="text-5xl font-extrabold text-[#D4A84C]">
+                {totalPrograms}
+              </p>
+              <p className="text-sm text-gray-600 mt-1 font-medium uppercase tracking-wide">
+                Across all universities
+              </p>
             </motion.div>
 
             <motion.div
@@ -264,20 +376,25 @@ export function StudyPlan() {
               className="bg-white rounded-2xl border-2 border-[#9B1B30]/10 p-6 shadow-sm hover:shadow-md transition-shadow hover:border-[#9B1B30]/30"
             >
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Tasks Completed</p>
+                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                  Tasks Completed
+                </p>
                 <Award className="w-5 h-5 text-[#9B1B30]" />
               </div>
               <p className="text-5xl font-extrabold text-[#9B1B30]">
-                {completedCount}<span className="text-3xl text-gray-400">/{totalTasks}</span>
+                {completedCount}
+                <span className="text-3xl text-gray-400">/{totalTasks}</span>
               </p>
-              <p className="text-sm text-gray-600 mt-1 font-medium">Keep up the momentum!</p>
+              <p className="text-sm text-gray-600 mt-1 font-medium">
+                Keep up the momentum!
+              </p>
             </motion.div>
           </div>
         </motion.div>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Milestones & Timeline */}
+          {/* Left Column - Milestones & Gaps */}
           <div className="lg:col-span-2 space-y-6">
             {/* Milestones */}
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
@@ -295,10 +412,20 @@ export function StudyPlan() {
                   const milestoneDone = milestoneTaskIds.filter((id) =>
                     completedTasks.has(id)
                   ).length;
-                  const milestoneProgress = Math.round(
-                    (milestoneDone / milestone.tasks.length) * 100
-                  );
+                  const milestoneProgress =
+                    milestone.tasks.length > 0
+                      ? Math.round(
+                          (milestoneDone / milestone.tasks.length) * 100
+                        )
+                      : 0;
                   const isExpanded = expandedMilestone === milestone.id;
+
+                  const colorMap: Record<string, string> = {
+                    blue: "#2563eb",
+                    purple: "#9333ea",
+                    green: "#10b981",
+                    amber: "#f59e0b",
+                  };
 
                   return (
                     <motion.div
@@ -308,21 +435,19 @@ export function StudyPlan() {
                       transition={{ delay: index * 0.1 }}
                       className={`border-2 rounded-xl overflow-hidden transition-all ${
                         milestone.status === "in-progress"
-                          ? `border-${milestone.color}-300 bg-${milestone.color}-50/50`
+                          ? "border-blue-300 bg-blue-50/50"
                           : "border-gray-200 bg-white"
                       }`}
                     >
                       <button
                         onClick={() =>
-                          setExpandedMilestone(
-                            isExpanded ? null : milestone.id
-                          )
+                          setExpandedMilestone(isExpanded ? null : milestone.id)
                         }
                         className="w-full p-5 text-left hover:bg-gray-50/50 transition-colors"
                       >
                         <div className="flex items-start gap-4">
                           <div className="flex-shrink-0 mt-1">
-                            {milestone.status === "completed" ? (
+                            {milestoneProgress === 100 ? (
                               <CheckCircle2 className="w-6 h-6 text-green-500" />
                             ) : milestone.status === "in-progress" ? (
                               <div className="w-6 h-6 rounded-full border-4 border-primary border-t-transparent animate-spin" />
@@ -342,10 +467,8 @@ export function StudyPlan() {
                                 </p>
                               </div>
                               <div className="flex items-center gap-2 flex-shrink-0">
-                                <span
-                                  className={`inline-block px-3 py-1 rounded-lg text-xs font-medium bg-${milestone.color}-100 text-${milestone.color}-700`}
-                                >
-                                  {milestone.timeframe}
+                                <span className="inline-block px-3 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-700">
+                                  {milestone.tasks.length} tasks
                                 </span>
                                 {isExpanded ? (
                                   <ChevronUp className="w-5 h-5 text-gray-400" />
@@ -359,17 +482,13 @@ export function StudyPlan() {
                               <div className="flex-1 bg-gray-200 rounded-full h-2">
                                 <motion.div
                                   initial={{ width: 0 }}
-                                  animate={{ width: `${milestoneProgress}%` }}
-                                  className={`bg-${milestone.color}-600 h-2 rounded-full`}
+                                  animate={{
+                                    width: `${milestoneProgress}%`,
+                                  }}
+                                  className="h-2 rounded-full"
                                   style={{
                                     backgroundColor:
-                                      milestone.color === "blue"
-                                        ? "#2563eb"
-                                        : milestone.color === "purple"
-                                        ? "#9333ea"
-                                        : milestone.color === "green"
-                                        ? "#10b981"
-                                        : "#f59e0b",
+                                      colorMap[milestone.color] ?? "#f59e0b",
                                   }}
                                 />
                               </div>
@@ -430,74 +549,158 @@ export function StudyPlan() {
               </div>
             </div>
 
-            {/* Priority Actions */}
+            {/* Priority Gaps */}
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-6">
                 <Zap className="w-6 h-6 text-amber-500" />
                 <h2 className="text-2xl font-bold text-gray-900">
-                  Priority Actions
+                  Priority Gaps
                 </h2>
               </div>
               <p className="text-gray-600 mb-6">
-                Sorted by impact — start with the highest priority to unlock the
-                most programs.
+                Sorted by impact — addressing the top gaps improves your chances
+                for the most programs.
               </p>
               <div className="space-y-4">
-                {studyPlanGaps.map((gap) => (
-                  <PriorityActionCard key={gap.priority} {...gap} />
-                ))}
+                {priorityGaps.map((gap) => {
+                  const isExp = expandedGap === String(gap.priority);
+                  const severityColors: Record<string, string> = {
+                    high: "bg-red-50 text-red-600",
+                    medium: "bg-amber-50 text-amber-600",
+                    low: "bg-green-50 text-green-600",
+                  };
+                  return (
+                    <div
+                      key={gap.priority}
+                      className="bg-white rounded-lg border border-gray-200 p-5"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-sm">
+                          {gap.priority}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-gray-900 mb-2">
+                            {gap.title}
+                          </h3>
+                          <div className="text-sm text-gray-600 mb-3">
+                            Current: {gap.current}
+                          </div>
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                                severityColors[gap.severity] ??
+                                severityColors.medium
+                              }`}
+                            >
+                              {gap.severity} severity
+                            </span>
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-600">
+                              Affects {gap.impactCount} program
+                              {gap.impactCount !== 1 ? "s" : ""}
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={() =>
+                              setExpandedGap(isExp ? null : String(gap.priority))
+                            }
+                            className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 cursor-pointer"
+                          >
+                            {isExp ? "Hide" : "View"} {gap.impactCount} programs
+                            {isExp ? (
+                              <ChevronUp className="w-4 h-4" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4" />
+                            )}
+                          </button>
+
+                          {isExp && (
+                            <div className="mt-3 pt-3 border-t border-gray-100">
+                              <ul className="space-y-1">
+                                {gap.programs.map((program, i) => (
+                                  <li
+                                    key={i}
+                                    className="text-sm text-gray-600"
+                                  >
+                                    • {program}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          {/* Right Column - Analytics & Resources */}
+          {/* Right Column - Analytics */}
           <div className="space-y-6">
             {/* Progress Chart */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-6">
-                <BarChart3 className="w-5 h-5 text-[#9B1B30]" />
-                <h3 className="font-semibold text-gray-900 uppercase tracking-wide text-sm">
-                  Progress Forecast
-                </h3>
+            {progressData.length > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-6">
+                  <BarChart3 className="w-5 h-5 text-[#9B1B30]" />
+                  <h3 className="font-semibold text-gray-900 uppercase tracking-wide text-sm">
+                    Progress Forecast
+                  </h3>
+                </div>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={progressData}>
+                      <defs>
+                        <linearGradient
+                          id="colorProgress"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#9B1B30"
+                            stopOpacity={0.3}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#9B1B30"
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis
+                        dataKey="month"
+                        tick={{ fill: "#6b7280", fontSize: 12 }}
+                      />
+                      <YAxis
+                        tick={{ fill: "#6b7280", fontSize: 12 }}
+                        tickFormatter={(value) => `${value}%`}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "white",
+                          border: "1px solid #e5e7eb",
+                          borderRadius: "8px",
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="completion"
+                        stroke="#9B1B30"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#colorProgress)"
+                        isAnimationActive={false}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={progressData}>
-                    <defs>
-                      <linearGradient id="colorProgress" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#9B1B30" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#9B1B30" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis
-                      dataKey="month"
-                      tick={{ fill: "#6b7280", fontSize: 12 }}
-                    />
-                    <YAxis
-                      tick={{ fill: "#6b7280", fontSize: 12 }}
-                      tickFormatter={(value) => `${value}%`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "white",
-                        border: "1px solid #e5e7eb",
-                        borderRadius: "8px",
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="completion"
-                      stroke="#9B1B30"
-                      strokeWidth={3}
-                      fillOpacity={1}
-                      fill="url(#colorProgress)"
-                      isAnimationActive={false}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+            )}
 
             {/* Task Distribution */}
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
@@ -559,54 +762,6 @@ export function StudyPlan() {
               </div>
             </div>
 
-            {/* Quick Resources */}
-            <div className="bg-gradient-to-br from-[#9B1B30] to-[#7A1420] rounded-2xl p-6 text-white shadow-lg">
-              <div className="flex items-center gap-2 mb-4">
-                <BookOpen className="w-5 h-5" />
-                <h3 className="font-bold uppercase tracking-wide text-sm">Recommended Resources</h3>
-              </div>
-              <div className="space-y-3">
-                {[
-                  {
-                    name: "IELTS Prep Course",
-                    provider: "British Council",
-                    rating: 4.8,
-                  },
-                  {
-                    name: "Linear Algebra",
-                    provider: "MIT OpenCourseWare",
-                    rating: 4.9,
-                  },
-                  {
-                    name: "GRE Official Guide",
-                    provider: "ETS",
-                    rating: 4.7,
-                  },
-                ].map((resource, index) => (
-                  <motion.a
-                    key={index}
-                    href="#"
-                    whileHover={{ scale: 1.02 }}
-                    className="flex items-center justify-between p-3 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-colors border border-white/10"
-                  >
-                    <div className="flex-1">
-                      <p className="font-bold text-sm">{resource.name}</p>
-                      <p className="text-xs text-white/80">
-                        {resource.provider}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1 bg-[#D4A84C] px-2 py-1 rounded">
-                        <Star className="w-3 h-3 fill-current text-white" />
-                        <span className="text-xs font-bold">{resource.rating}</span>
-                      </div>
-                      <ExternalLink className="w-4 h-4" />
-                    </div>
-                  </motion.a>
-                ))}
-              </div>
-            </div>
-
             {/* Motivational Card */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -616,19 +771,23 @@ export function StudyPlan() {
             >
               <div className="flex items-center gap-3 mb-3">
                 <Award className="w-8 h-8" />
-                <h3 className="text-xl font-extrabold">You're on track! 🎯</h3>
+                <h3 className="text-xl font-extrabold">You can do this!</h3>
               </div>
               <p className="text-white/90 mb-4 font-medium">
-                Complete these steps and you'll have access to {totalPrograms} more
-                world-class programs, including ETH Zurich, Imperial College, and
-                EPFL.
+                Address {priorityGaps.length} key gaps to strengthen your
+                applications across {totalPrograms} programs.
               </p>
-              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 border border-white/30">
-                <p className="text-sm font-bold mb-1 uppercase tracking-wide">Next Milestone</p>
-                <p className="text-sm text-white/90">
-                  Complete IELTS practice test by next week
-                </p>
-              </div>
+              {milestones.length > 0 && (
+                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 border border-white/30">
+                  <p className="text-sm font-bold mb-1 uppercase tracking-wide">
+                    First Milestone
+                  </p>
+                  <p className="text-sm text-white/90">
+                    {milestones[0].title}: {milestones[0].tasks.length} actions
+                    to complete
+                  </p>
+                </div>
+              )}
             </motion.div>
           </div>
         </div>
